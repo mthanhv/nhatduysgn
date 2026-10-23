@@ -1,0 +1,2 @@
+@props(['width' => 54])
+<svg width="{{ $width }}" height="{{ round($width * 109 / 134) }}" viewBox="0 0 134 109" role="img" aria-label="Logo {{ setting('brand_name') }}" {{ $attributes }}><polygon points="67,3 131,106 3,106" fill="#F000F0"/><circle cx="67" cy="72" r="27" fill="none" stroke="#E3201B" stroke-width="9" stroke-dasharray="6.5 5.6"/><circle cx="67" cy="72" r="24" fill="#E3201B"/><circle cx="67" cy="72" r="18" fill="#FFF000"/><text x="67" y="78.5" text-anchor="middle" font-family="Arial, sans-serif" font-weight="700" font-size="17" fill="#E3201B">ND</text></svg>
