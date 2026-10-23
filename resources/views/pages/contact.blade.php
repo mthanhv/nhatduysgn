@@ -105,14 +105,13 @@
 
         <aside class="card contact-aside" aria-label="Văn phòng">
             <div class="map">
-                @if (setting('map_embed_url'))
-                    <iframe src="{{ setting('map_embed_url') }}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Bản đồ văn phòng {{ setting('brand_name') }}"></iframe>
-                @else
-                    <a href="{{ setting('map_url') }}" target="_blank" rel="noopener" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;color:var(--ink)">
-                        <x-ui-icon name="pin" :size="40" :stroke="1.6" style="color:var(--accent)" />
-                        <strong>Mở bản đồ Google Maps</strong>
-                    </a>
-                @endif
+                {{-- Exact embed link from Settings if provided; otherwise Google Maps locates the address (no API key needed). --}}
+                <iframe
+                    src="{{ setting('map_embed_url') ?: 'https://maps.google.com/maps?q='.urlencode(setting('address').', Việt Nam').'&hl=vi&z=16&output=embed' }}"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    allowfullscreen
+                    title="Bản đồ văn phòng {{ setting('brand_name') }}"></iframe>
             </div>
             <div class="office">
                 <div>

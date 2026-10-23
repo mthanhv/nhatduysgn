@@ -39,6 +39,19 @@
     });
   });
 
+  // "Copy link" buttons on articles.
+  document.querySelectorAll('[data-copy-link]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var label = button.querySelector('[data-copy-label]');
+      var done = function () { if (label) { label.textContent = 'Đã sao chép'; } };
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(button.getAttribute('data-copy-link')).then(done);
+      } else {
+        window.prompt('Sao chép liên kết:', button.getAttribute('data-copy-link'));
+      }
+    });
+  });
+
   // Tabs (WAI-ARIA pattern). Without JS all panels stay visible.
   document.querySelectorAll('[data-tabs]').forEach(function (root) {
     var tabs = Array.prototype.slice.call(root.querySelectorAll('[role="tab"]'));

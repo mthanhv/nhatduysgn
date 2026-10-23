@@ -39,7 +39,6 @@ class ContentChecklist extends Widget
             ['label' => 'Thương hiệu chưa có logo', 'count' => Brand::query()->published()->whereNull('logo')->count(), 'url' => BrandResource::getUrl('index')],
             ['label' => 'Chưa có chứng nhận nào', 'count' => Certificate::query()->published()->exists() ? 0 : 1, 'url' => CertificateResource::getUrl('index'), 'flag' => true],
             ['label' => 'Chưa nhập số Zalo', 'count' => blank(setting('zalo')) ? 1 : 0, 'url' => ManageSiteSettings::getUrl(), 'flag' => true],
-            ['label' => 'Chưa nhúng bản đồ Google Maps', 'count' => blank(setting('map_embed_url')) ? 1 : 0, 'url' => ManageSiteSettings::getUrl(), 'flag' => true],
         ];
 
         return [

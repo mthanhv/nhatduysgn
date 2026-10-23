@@ -102,4 +102,38 @@ class PublicPagesTest extends TestCase
     {
         $this->get('/trang-khong-ton-tai')->assertNotFound()->assertSee('Không tìm thấy trang');
     }
+
+    public function test_news_page_highlights_newest_post_and_searches(): void
+    {
+        $older = Post::factory()->create(['title' => 'Tiềm năng phát triển điện gió', 'published_at' => now()->subMonth(), 'view_count' => 50]);
+        $newest = Post::factory()->create(['title' => 'Khai trương văn phòng mới', 'published_at' => now()->subDay()]);
+
+        $this->get(route('posts.index'))
+            ->assertOk()
+            ->assertSeeInOrder(['Mới nhất', 'Khai trương văn phòng mới', 'Bài viết khác', 'Tiềm năng phát triển điện gió'])
+            ->assertSee('phút đọc');
+
+        $this->get(route('posts.index', ['q' => 'điện gió']))
+            ->assertOk()
+            ->assertSee('Tiềm năng phát triển điện gió')
+            ->assertDontSee('Khai trương văn phòng mới');
+
+        $this->get(route('posts.show', $older))->assertOk()->assertSee('Bài sau')->assertSee($newest->title)->assertSee('Sao chép liên kết');
+    }
+
+    public function test_article_hides_excerpt_that_only_repeats_the_opening(): void
+    {
+        $auto = Post::factory()->create(['excerpt' => 'Năng lượng gió được kỳ vọng…', 'content' => '<p>Năng lượng gió được kỳ vọng giúp Việt Nam.</p>']);
+        $written = Post::factory()->create(['excerpt' => 'Tóm tắt riêng do biên tập viên viết.', 'content' => '<p>Nội dung chi tiết.</p>']);
+
+        $this->get(route('posts.show', $auto))->assertOk()->assertDontSee('class="article-lead"', false);
+        $this->get(route('posts.show', $written))->assertOk()->assertSee('Tóm tắt riêng do biên tập viên viết.');
+    }
+
+    public function test_contact_page_shows_map_of_the_office_address(): void
+    {
+        $this->get(route('contact'))
+            ->assertOk()
+            ->assertSee('https://maps.google.com/maps?q='.urlencode(config('site.address').', Việt Nam'), false);
+    }
 }

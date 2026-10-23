@@ -73,7 +73,8 @@ class ManageSiteSettings extends Page
                             TextInput::make('address')->label('Địa chỉ')->required()->columnSpanFull(),
                             TextInput::make('map_url')->label('Link Google Maps (nút Chỉ đường)')->url()->columnSpanFull(),
                             TextInput::make('map_embed_url')
-                                ->label('Link nhúng bản đồ (Google Maps → Chia sẻ → Nhúng bản đồ → phần src)')
+                                ->label('Link nhúng bản đồ (tùy chọn)')
+                                ->helperText('Để trống: bản đồ tự hiển thị theo địa chỉ. Muốn ghim chính xác: Google Maps → Chia sẻ → Nhúng bản đồ → dán phần src.')
                                 ->url()
                                 ->rule('starts_with:https://www.google.com/maps/embed')
                                 ->columnSpanFull(),
