@@ -33,7 +33,7 @@ class PostForm
                     Section::make('Ảnh bìa')->schema([
                         Uploads::image('cover', 'posts')->hiddenLabel(),
                     ]),
-                    Section::make('SEO')->collapsed()->schema([
+                    Section::make('SEO')->collapsible()->collapsed()->schema([
                         TextInput::make('meta_title')->label('Tiêu đề SEO')->maxLength(255),
                         Textarea::make('meta_description')->label('Mô tả SEO')->rows(3)->maxLength(500),
                     ]),

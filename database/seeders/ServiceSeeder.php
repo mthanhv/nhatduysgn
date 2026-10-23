@@ -27,20 +27,20 @@ class ServiceSeeder extends Seeder
                 'summary' => 'Phục hồi bề mặt kín ngay tại nhà máy bằng máy KEMET và LARSLAP.',
                 'description' => '<p>Phục hồi bề mặt kín của van an toàn và seal cơ khí ngay tại nhà máy bằng máy rà phẳng KEMET và LARSLAP, không cần tháo rời thiết bị về xưởng.</p>',
                 'equipment' => ['KEMET', 'LARSLAP'],
-                'image' => null,
+                'image' => 'legacy/files/slides/kemet15.png',
             ],
             [
                 'title' => 'Gia nhiệt cảm ứng (Induction Heating)',
                 'summary' => 'Thiết bị INCOIL làm nóng bu lông, vòng bi, khớp nối với nhiệt độ kiểm soát chính xác.',
                 'description' => '<p>Thiết bị gia nhiệt cảm ứng INCOIL làm nóng bu lông, vòng bi, khớp nối theo nhiệt độ kiểm soát chính xác, hỗ trợ tháo lắp an toàn và không phát sinh lửa hở.</p>',
                 'equipment' => ['INCOIL'],
-                'image' => null,
+                'image' => 'legacy/files/products/screen-shot-2024-06-18-at-104852.png',
             ],
             [
                 'title' => 'Tư vấn & bảo trì thiết bị công nghiệp',
                 'summary' => 'Khảo sát, hiệu chuẩn lực xiết và cân chỉnh đồng trục bằng laser.',
                 'description' => '<p>Khảo sát, hiệu chuẩn lực xiết và cân chỉnh đồng trục bằng laser, giúp khách hàng chủ động lập kế hoạch bảo trì định kỳ thay vì xử lý sự cố bị động.</p>',
-                'equipment' => ['ITH', 'SCHAEFFLER'],
+                'equipment' => ['SCHAEFFLER', 'ITH'],
                 'image' => 'legacy/files/products/dms1.png',
             ],
         ];

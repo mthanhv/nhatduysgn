@@ -81,6 +81,19 @@ return [
     ],
 
     'services_intro' => 'Với đội ngũ kỹ thuật giàu kinh nghiệm cùng thiết bị chuyên dụng từ các hãng hàng đầu thế giới, Nhật Duy trực tiếp triển khai dịch vụ cho các nhà máy dầu khí, điện lực, hóa chất và sản xuất công nghiệp trên toàn quốc.',
+    'services_hero_image' => null,
+    'service_benefits' => [
+        ['title' => 'Triển khai tại nhà máy', 'text' => 'Kỹ thuật viên và thiết bị có mặt tại hiện trường trên toàn quốc, không cần gửi thiết bị về xưởng.'],
+        ['title' => 'Thiết bị chính hãng', 'text' => 'Dụng cụ ITH, KEMET, LARSLAP, INCOIL, Schaeffler — đúng thiết bị cho từng hạng mục.'],
+        ['title' => 'Đúng thông số kỹ thuật', 'text' => 'Thực hiện theo lực xiết, nhiệt độ và quy trình của nhà sản xuất thiết bị.'],
+        ['title' => 'Trọn gói vật tư', 'text' => 'Cung cấp kèm keo, dầu mỡ, gioăng, vật liệu mài… cho đợt bảo dưỡng.'],
+    ],
+    'service_faqs' => [
+        ['question' => 'Nhật Duy triển khai dịch vụ ở những khu vực nào?', 'answer' => 'Chúng tôi triển khai dịch vụ kỹ thuật tại hiện trường cho các nhà máy dầu khí, điện lực, hóa chất và sản xuất công nghiệp trên toàn quốc.'],
+        ['question' => 'Cần cung cấp những thông tin gì để được tư vấn?', 'answer' => 'Loại thiết bị và hạng mục cần thực hiện (ví dụ cỡ bu lông, lực xiết, loại van), điều kiện vận hành, địa điểm và thời gian dừng máy dự kiến. Ảnh chụp hiện trạng giúp chúng tôi đề xuất phương án nhanh hơn.'],
+        ['question' => 'Sau khi hoàn thành có hồ sơ bàn giao không?', 'answer' => 'Có. Sau khi nghiệm thu, chúng tôi bàn giao biên bản kỹ thuật và khuyến nghị bảo trì tiếp theo.'],
+        ['question' => 'Thiết bị và vật tư sử dụng có phải hàng chính hãng không?', 'answer' => 'Nhật Duy là đại diện, nhà phân phối của các thương hiệu thiết bị sử dụng trong dịch vụ, vì vậy thiết bị và vật tư đều là hàng chính hãng.'],
+    ],
     'service_steps' => [
         ['title' => 'Tiếp nhận yêu cầu', 'text' => 'Khách hàng gửi thông tin thiết bị, điều kiện vận hành và thời gian dừng máy dự kiến.'],
         ['title' => 'Khảo sát & đề xuất', 'text' => 'Kỹ sư khảo sát hiện trường và đề xuất phương án, thiết bị phù hợp.'],

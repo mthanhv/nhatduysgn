@@ -136,4 +136,19 @@ class PublicPagesTest extends TestCase
             ->assertOk()
             ->assertSee('https://maps.google.com/maps?q='.urlencode(config('site.address').', Việt Nam'), false);
     }
+
+    public function test_services_page_links_equipment_brands_products_and_faq(): void
+    {
+        $brand = Brand::factory()->create(['name' => 'ITH']);
+        Product::factory()->create(['brand_id' => $brand->id, 'name' => 'Đầu xiết thủy lực dòng CX', 'image' => 'products/cx.jpg']);
+        Service::factory()->create(['title' => 'Tháo lắp bu lông bằng thủy lực', 'equipment' => ['ITH']]);
+
+        $this->get(route('services'))
+            ->assertOk()
+            ->assertSee('Tháo lắp bu lông bằng thủy lực')
+            ->assertSee(route('products.brand', $brand), false)
+            ->assertSee('Đầu xiết thủy lực dòng CX')
+            ->assertSee('Câu hỏi thường gặp')
+            ->assertSee('Quy trình làm việc');
+    }
 }

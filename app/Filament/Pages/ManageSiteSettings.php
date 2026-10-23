@@ -148,6 +148,15 @@ class ManageSiteSettings extends Page
                     ]),
                     Tab::make('Dịch vụ')->icon(Heroicon::OutlinedWrenchScrewdriver)->schema([
                         Textarea::make('services_intro')->label('Đoạn giới thiệu trang Dịch vụ')->rows(3),
+                        Uploads::image('services_hero_image', 'settings')->label('Ảnh nền phần đầu trang')->helperText('Để trống dùng ảnh mặc định.'),
+                        Repeater::make('service_benefits')->label('Vì sao chọn Nhật Duy')->schema([
+                            TextInput::make('title')->label('Tiêu đề')->required(),
+                            Textarea::make('text')->label('Mô tả')->rows(2),
+                        ])->columns(2)->reorderable()->maxItems(6)->addActionLabel('Thêm lý do'),
+                        Repeater::make('service_faqs')->label('Câu hỏi thường gặp')->schema([
+                            TextInput::make('question')->label('Câu hỏi')->required(),
+                            Textarea::make('answer')->label('Trả lời')->rows(3)->required(),
+                        ])->reorderable()->collapsible()->itemLabel(fn (array $state): ?string => $state['question'] ?? null)->addActionLabel('Thêm câu hỏi'),
                         Repeater::make('service_steps')->label('Quy trình làm việc')->schema([
                             TextInput::make('title')->label('Bước')->required(),
                             Textarea::make('text')->label('Mô tả')->rows(2),
@@ -196,7 +205,7 @@ class ManageSiteSettings extends Page
             'home_stats', 'home_about_title', 'home_about_text', 'home_about_points', 'home_about_image', 'industries',
             'about_hero_title', 'about_hero_text', 'about_hero_image', 'about_intro_title', 'about_intro_body', 'about_pillars',
             'about_spotlight_label', 'about_spotlight_country', 'about_spotlight_title', 'about_spotlight_text', 'about_spotlight_image',
-            'about_origins', 'about_values', 'services_intro', 'service_steps', 'seo_title', 'seo_description',
+            'about_origins', 'about_values', 'services_intro', 'services_hero_image', 'service_benefits', 'service_faqs', 'service_steps', 'seo_title', 'seo_description',
         ];
     }
 }
