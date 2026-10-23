@@ -117,7 +117,7 @@ zcat ~/domains/nhatduysgn.com/logs/*.tar.gz 2>/dev/null | grep -a '" 200 ' | awk
 php artisan legacy:verify --urls=old-urls.txt
 ```
 
-**Go-live rule:** run `legacy:import`, then `legacy:verify` (with `--urls`) on the production server; switch DNS only when it exits with code 0. After go-live, watch *Hệ thống → Chuyển hướng URL* and the server's 404 log for a few weeks and add redirects for anything new.
+**Go-live rule:** run the full `legacy:import` (it ends with the `catalog` step that applies the product group mapping in `config/catalog.php`), then `legacy:verify` (with `--urls`) on the production server; switch DNS only when it exits with code 0. Regrouping decisions belong in `config/catalog.php`; edits made only in a local admin (settings, group images) must be re-entered in production. After go-live, watch *Hệ thống → Chuyển hướng URL* and the server's 404 log for a few weeks and add redirects for anything new.
 
 ## Old URLs (SEO)
 
