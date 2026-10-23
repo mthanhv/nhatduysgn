@@ -68,6 +68,7 @@ class LegacyImporterTest extends TestCase
         $this->assertStringNotContainsString('<script', $product->description);
         $this->assertStringContainsString('/uploads/legacy/media/cx-chart.png', $product->description);
         $this->assertSame(57, $product->view_count);
+        $this->assertSame('Bôi trơn', $product->keywords, 'Old product tags become search keywords');
         $this->assertSame('2017-05-05', $product->created_at->toDateString());
 
         $this->assertSame(1, Post::count(), 'Only news/project/event articles become posts');
@@ -80,6 +81,22 @@ class LegacyImporterTest extends TestCase
         $this->assertTrue(Storage::disk('public')->exists('legacy/files/products/ith-cx.jpg'));
         $this->assertFalse(Storage::disk('public')->exists('legacy/media/file.php<?.pdf'), 'Disguised PHP files are never copied');
         $this->assertFalse(Storage::disk('public')->exists('legacy/media/fake.jpg'), 'Images containing PHP code are never copied');
+        $this->assertFalse(Storage::disk('public')->exists('legacy/media/not-really.pdf'), 'Files whose real type does not match the extension are never copied');
+        $this->assertTrue(Storage::disk('public')->exists('legacy/media/cx-chart.png'), 'Real images whose binary data happens to contain "<?=" are kept');
+    }
+
+    public function test_verify_passes_after_a_full_import_and_reports_missing_records(): void
+    {
+        $this->artisan('legacy:import')->assertSuccessful();
+        $this->artisan('legacy:verify')->assertSuccessful();
+
+        Product::where('legacy_id', 423)->delete();
+        Storage::disk('public')->delete('legacy/files/customers/ptsc.png');
+
+        $this->artisan('legacy:verify')
+            ->expectsOutputToContain('Sản phẩm #423')
+            ->expectsOutputToContain('files/customers/ptsc.png')
+            ->assertFailed();
     }
 
     public function test_import_is_idempotent_and_can_keep_admin_edits(): void
@@ -169,6 +186,19 @@ class LegacyImporterTest extends TestCase
             $table->integer('id');
             $table->string('title');
         });
+        $schema->create('products_tags', function (Blueprint $table) {
+            $table->integer('product_id');
+            $table->integer('tag_id');
+        });
+        $schema->create('menu_items', function (Blueprint $table) {
+            $table->integer('id');
+            $table->string('link');
+            $table->boolean('publish')->default(true);
+        });
+        $schema->create('slides', function (Blueprint $table) {
+            $table->integer('id');
+            $table->string('link')->nullable();
+        });
     }
 
     private function seedLegacyData(): void
@@ -195,15 +225,27 @@ class LegacyImporterTest extends TestCase
         ]);
         $db->table('contacts')->insert(['id' => 1, 'name' => 'Khách', 'email' => 'khach@example.com', 'title' => 'Hỏi giá', 'content' => 'Nội dung', 'created' => '2024-01-01 08:00:00']);
         $db->table('tags')->insert(['id' => 10, 'title' => 'Bôi trơn']);
+        $db->table('products_tags')->insert(['product_id' => 423, 'tag_id' => 10]);
+        $db->table('menu_items')->insert(['id' => 88, 'link' => '/articles/index/2/news.html', 'publish' => true]);
+        $db->table('slides')->insert(['id' => 1, 'link' => 'http://nhatduysgn.com/products/brand:19/title:ith-brand']);
+
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+        $jpeg = (function (): string {
+            ob_start();
+            imagejpeg(imagecreatetruecolor(1, 1));
+
+            return (string) ob_get_clean();
+        })();
 
         foreach ([
-            'files/products/ith-cx.jpg' => "\xFF\xD8\xFFJPEG",
-            'files/products/attachments/cx.pdf' => '%PDF-1.4',
-            'files/suppliers/ithlogo.jpeg' => "\xFF\xD8\xFFJPEG",
-            'files/customers/ptsc.png' => "\x89PNG",
-            'media/cx-chart.png' => "\x89PNG",
+            'files/products/ith-cx.jpg' => $jpeg,
+            'files/products/attachments/cx.pdf' => "%PDF-1.4\n%âãÏÓ\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF",
+            'files/suppliers/ithlogo.jpeg' => $jpeg,
+            'files/customers/ptsc.png' => $png,
+            'media/cx-chart.png' => $png.'<?=random binary bytes',
             'media/file.php<?.pdf' => '<?php system($_GET["c"]);',
             'media/fake.jpg' => "GIF89a<?php eval(\$_POST['x']);",
+            'media/not-really.pdf' => '<html>phishing page</html>',
         ] as $path => $content) {
             File::ensureDirectoryExists(dirname($this->webroot.'/'.$path));
             File::put($this->webroot.'/'.$path, $content);

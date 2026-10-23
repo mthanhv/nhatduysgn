@@ -13,9 +13,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class LatestContactMessages extends TableWidget
 {
-    protected static ?int $sort = 2;
-
-    protected int|string|array $columnSpan = 'full';
+    protected static ?int $sort = 3;
 
     protected static ?string $heading = 'Tin nhắn liên hệ mới nhất';
 

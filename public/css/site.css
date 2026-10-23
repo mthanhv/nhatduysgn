@@ -34,6 +34,9 @@ a:hover { color: var(--accent); }
 h1, h2, h3, h4 { line-height: 1.2; margin: 0; letter-spacing: -0.01em; }
 p { margin: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
+/* Text fields always have a light background, so never inherit white text from dark sections. */
+input, select, textarea { color: var(--ink); }
+input::placeholder, textarea::placeholder { color: var(--muted-2); opacity: 1; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .skip-link { position: absolute; left: 16px; top: -48px; background: var(--ink); color: #fff; padding: 10px 14px; border-radius: 6px; z-index: 100; }

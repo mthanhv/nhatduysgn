@@ -4,6 +4,10 @@ namespace Tests\Feature;
 
 use App\Filament\Pages\ManageSiteSettings;
 use App\Filament\Resources\ContactMessages\Pages\ViewContactMessage;
+use App\Filament\Widgets\ContentChecklist;
+use App\Filament\Widgets\LatestContactMessages;
+use App\Filament\Widgets\SiteStatsOverview;
+use App\Filament\Widgets\WelcomeBanner;
 use App\Models\ContactMessage;
 use App\Models\Product;
 use App\Models\User;
@@ -71,5 +75,17 @@ class AdminPanelTest extends TestCase
         $this->get(route('home'))
             ->assertSee('028 1111 2222')
             ->assertSee('Tiêu đề mới cho trang chủ');
+    }
+
+    public function test_dashboard_widgets_render(): void
+    {
+        $this->actingAs(User::factory()->create(['name' => 'Chị Lan']));
+        ContactMessage::factory()->create(['subject' => 'Hỏi giá CX-5']);
+        Product::factory()->create(['name' => 'KEO KHÓA REN LOCTITE 290', 'image' => null]);
+
+        Livewire::test(WelcomeBanner::class)->assertSee('Chị Lan')->assertSee('1 tin nhắn liên hệ chưa đọc');
+        Livewire::test(SiteStatsOverview::class)->assertSee('Tin nhắn chưa đọc');
+        Livewire::test(ContentChecklist::class)->assertSee('Sản phẩm chưa có ảnh')->assertSee('Tên sản phẩm VIẾT HOA toàn bộ');
+        Livewire::test(LatestContactMessages::class)->assertSee('Hỏi giá CX-5');
     }
 }

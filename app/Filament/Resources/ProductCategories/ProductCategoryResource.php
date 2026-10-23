@@ -29,6 +29,8 @@ class ProductCategoryResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Nhóm sản phẩm';
 
+    protected static bool $hasTitleCaseModelLabel = false;
+
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema

@@ -29,6 +29,8 @@ class ServiceResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Dịch vụ';
 
+    protected static bool $hasTitleCaseModelLabel = false;
+
     protected static ?string $recordTitleAttribute = 'title';
 
     public static function form(Schema $schema): Schema

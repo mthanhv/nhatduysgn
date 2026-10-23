@@ -23,7 +23,7 @@ class ServicesTable
                 TextColumn::make('title')->label('Dịch vụ')->searchable()->wrap()->description(fn ($record) => $record->summary),
                 ToggleColumn::make('is_published')->label('Hiển thị'),
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->recordActions([EditAction::make()->iconButton()->tooltip('Chỉnh sửa'), DeleteAction::make()->iconButton()->tooltip('Xóa')])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);
     }
 }

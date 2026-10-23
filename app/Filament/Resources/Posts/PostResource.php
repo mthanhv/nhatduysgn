@@ -29,6 +29,8 @@ class PostResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Tin tức';
 
+    protected static bool $hasTitleCaseModelLabel = false;
+
     protected static ?string $recordTitleAttribute = 'title';
 
     public static function form(Schema $schema): Schema

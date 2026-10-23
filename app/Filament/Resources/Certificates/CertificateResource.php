@@ -35,6 +35,8 @@ class CertificateResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Chứng nhận';
 
+    protected static bool $hasTitleCaseModelLabel = false;
+
     protected static ?string $recordTitleAttribute = 'title';
 
     public static function form(Schema $schema): Schema
@@ -60,7 +62,7 @@ class CertificateResource extends Resource
                 TextColumn::make('title')->label('Chứng nhận')->searchable()->wrap(),
                 ToggleColumn::make('is_published')->label('Hiển thị'),
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->recordActions([EditAction::make()->iconButton()->tooltip('Chỉnh sửa'), DeleteAction::make()->iconButton()->tooltip('Xóa')])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);
     }
 

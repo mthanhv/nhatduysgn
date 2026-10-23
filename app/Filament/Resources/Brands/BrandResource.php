@@ -38,6 +38,8 @@ class BrandResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Thương hiệu';
 
+    protected static bool $hasTitleCaseModelLabel = false;
+
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema
@@ -68,16 +70,19 @@ class BrandResource extends Resource
                 TextColumn::make('country')->label('Quốc gia')->toggleable(),
                 TextColumn::make('products_count')->label('Sản phẩm')->counts('products')->sortable(),
                 ToggleColumn::make('is_published')->label('Hiển thị'),
-                IconColumn::make('is_featured')->label('Trang chủ')->boolean(),
+                IconColumn::make('is_featured')->label('Trang chủ')->boolean()->trueIcon(Heroicon::Star)->falseIcon(Heroicon::OutlinedStar)->trueColor('warning')->falseColor('gray'),
             ])
             ->recordActions([
                 Action::make('view_on_site')
-                    ->label('Xem')
+                    ->label('Xem trên website')
                     ->icon(Heroicon::OutlinedArrowTopRightOnSquare)
+                    ->iconButton()
+                    ->color('gray')
+                    ->tooltip('Xem trên website')
                     ->url(fn (Brand $record): string => route('products.brand', $record))
                     ->openUrlInNewTab(),
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton()->tooltip('Chỉnh sửa'),
+                DeleteAction::make()->iconButton()->tooltip('Xóa'),
             ])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);
     }

@@ -21,6 +21,7 @@ return [
     // Old article IDs that were fixed pages rather than news posts.
     'article_pages' => [
         1 => '/gioi-thieu',
+        57 => '/gioi-thieu', // deleted "about us" article still linked from the old main menu
         64 => '/dich-vu',
         65 => '/gioi-thieu#chung-nhan',
     ],

@@ -31,7 +31,7 @@ class ProjectsTable
             ->filters([
                 SelectFilter::make('industry')->label('Ngành')->options(fn () => Project::query()->whereNotNull('industry')->distinct()->pluck('industry', 'industry')->all()),
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->recordActions([EditAction::make()->iconButton()->tooltip('Chỉnh sửa'), DeleteAction::make()->iconButton()->tooltip('Xóa')])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);
     }
 }

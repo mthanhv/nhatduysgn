@@ -98,7 +98,18 @@ class LegacyUrlResolver
             'home/index' => route('home'),
         ];
 
-        return $map[strtolower(trim($path, '/'))] ?? null;
+        $key = strtolower(trim($path, '/'));
+
+        if (isset($map[$key])) {
+            return $map[$key];
+        }
+
+        // Old menu links such as /articles/index/2/news.html.
+        if (preg_match('#^articles/(index|events|projects)(/|$)#', $key, $matches)) {
+            return $matches[1] === 'projects' ? route('projects.index') : route('posts.index');
+        }
+
+        return null;
     }
 
     /**

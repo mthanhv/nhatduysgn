@@ -33,6 +33,8 @@ class UserResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Tài khoản quản trị';
 
+    protected static bool $hasTitleCaseModelLabel = false;
+
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema
@@ -68,8 +70,8 @@ class UserResource extends Resource
                 TextColumn::make('created_at')->label('Tạo lúc')->dateTime('d/m/Y')->sortable(),
             ])
             ->recordActions([
-                EditAction::make(),
-                DeleteAction::make()->hidden(fn (User $record): bool => $record->is(Auth::user())),
+                EditAction::make()->iconButton()->tooltip('Chỉnh sửa'),
+                DeleteAction::make()->iconButton()->tooltip('Xóa')->hidden(fn (User $record): bool => $record->is(Auth::user())),
             ]);
     }
 

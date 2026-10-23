@@ -29,6 +29,8 @@ class ProductResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Sản phẩm';
 
+    protected static bool $hasTitleCaseModelLabel = false;
+
     protected static ?string $recordTitleAttribute = 'name';
 
     /**

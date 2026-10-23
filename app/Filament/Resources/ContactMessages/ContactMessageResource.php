@@ -26,6 +26,8 @@ class ContactMessageResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Tin nhắn liên hệ';
 
+    protected static bool $hasTitleCaseModelLabel = false;
+
     protected static ?string $recordTitleAttribute = 'subject';
 
     public static function canCreate(): bool

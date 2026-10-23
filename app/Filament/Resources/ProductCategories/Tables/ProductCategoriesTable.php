@@ -32,7 +32,7 @@ class ProductCategoriesTable
                     ->description(fn (ProductCategory $record): ?string => $record->parent ? '↳ '.$record->parent->name : null),
                 TextColumn::make('products_count')->label('Sản phẩm')->counts('products')->sortable(),
                 ToggleColumn::make('is_published')->label('Hiển thị'),
-                IconColumn::make('is_featured')->label('Chủ lực')->boolean(),
+                IconColumn::make('is_featured')->label('Chủ lực')->boolean()->trueIcon(Heroicon::Star)->falseIcon(Heroicon::OutlinedStar)->trueColor('warning')->falseColor('gray'),
                 TextColumn::make('sort_order')->label('Thứ tự')->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
@@ -49,12 +49,15 @@ class ProductCategoriesTable
             ])
             ->recordActions([
                 Action::make('view_on_site')
-                    ->label('Xem')
+                    ->label('Xem trên website')
                     ->icon(Heroicon::OutlinedArrowTopRightOnSquare)
+                    ->iconButton()
+                    ->color('gray')
+                    ->tooltip('Xem trên website')
                     ->url(fn (ProductCategory $record): string => route('products.category', $record))
                     ->openUrlInNewTab(),
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton()->tooltip('Chỉnh sửa'),
+                DeleteAction::make()->iconButton()->tooltip('Xóa'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

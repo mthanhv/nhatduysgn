@@ -29,12 +29,15 @@ class PostsTable
             ])
             ->recordActions([
                 Action::make('view_on_site')
-                    ->label('Xem')
+                    ->label('Xem trên website')
                     ->icon(Heroicon::OutlinedArrowTopRightOnSquare)
+                    ->iconButton()
+                    ->color('gray')
+                    ->tooltip('Xem trên website')
                     ->url(fn (Post $record): string => route('posts.show', $record))
                     ->openUrlInNewTab(),
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton()->tooltip('Chỉnh sửa'),
+                DeleteAction::make()->iconButton()->tooltip('Xóa'),
             ])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);
     }

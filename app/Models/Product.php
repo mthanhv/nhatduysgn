@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
-#[Fillable(['product_category_id', 'brand_id', 'name', 'slug', 'code', 'origin', 'summary', 'description', 'specifications', 'image', 'gallery', 'documents', 'is_featured', 'is_published', 'sort_order', 'meta_title', 'meta_description', 'legacy_id'])]
+#[Fillable(['product_category_id', 'brand_id', 'name', 'slug', 'code', 'origin', 'summary', 'description', 'specifications', 'keywords', 'image', 'gallery', 'documents', 'is_featured', 'is_published', 'sort_order', 'meta_title', 'meta_description', 'legacy_id'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -25,6 +25,7 @@ class Product extends Model
                 $product->code,
                 $product->brand?->name,
                 $product->summary,
+                $product->keywords,
             ])));
 
             // Compact code ("CX-5" → "cx5", "Loctite 243" → "loctite243") so users can type codes without separators.

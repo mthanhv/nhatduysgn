@@ -34,6 +34,8 @@ class RedirectResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Chuyển hướng URL';
 
+    protected static bool $hasTitleCaseModelLabel = false;
+
     protected static ?string $recordTitleAttribute = 'from_path';
 
     public static function form(Schema $schema): Schema
@@ -73,7 +75,7 @@ class RedirectResource extends Resource
                 TextColumn::make('last_hit_at')->label('Lần cuối')->since()->sortable()->toggleable(),
                 ToggleColumn::make('is_active')->label('Bật'),
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->recordActions([EditAction::make()->iconButton()->tooltip('Chỉnh sửa'), DeleteAction::make()->iconButton()->tooltip('Xóa')])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);
     }
 

@@ -78,6 +78,35 @@ php artisan legacy:import --skip-existing         # only add new records, keep a
 
 Connection settings: `LEGACY_DB_*` and `LEGACY_WEBROOT` in `.env`. The 4 services are created by `php artisan db:seed` (the old site stored them as one article).
 
+### Proving nothing was lost
+
+```bash
+php artisan legacy:verify                       # exit code 0 = everything is there
+php artisan legacy:verify --urls=old-urls.txt   # also check real URLs visitors/Google used
+```
+
+It reconciles the old site against the new one, record by record, and lists every gap:
+
+| Check | What "complete" means |
+|---|---|
+| Records | Every old category, brand/supplier, product, news article, client, contact message and tag has a new counterpart (matched by old ID) |
+| Product fields | Same name, group, brand, visibility; image and attachment present when the old file existed; description not empty; every old tag kept as a search keyword |
+| Files | Every safe file in the old `files/` and `media/` exists under `public/uploads/legacy` (rejected files are listed separately) |
+| Content links | Every image/link inside migrated descriptions and posts points to a file or page that exists; no links left to the old domain |
+| Old URLs | Every old product/category/brand/supplier/tag/article URL plus the old menu and slider links answers 301 → a page that returns 200 |
+
+It also prints what is **not migrated on purpose** (old admin users, homepage slider, menus, template text blocks) so the report covers every old table.
+
+For the strongest check, run it against the URLs real visitors and Google used, taken from the old server's access logs before switching DNS:
+
+```bash
+zcat ~/domains/nhatduysgn.com/logs/*.tar.gz 2>/dev/null | grep -a '" 200 ' | awk '{print $7}' \
+  | grep -vE '\.(css|js|ico|woff2?)(\?|$)' | sort | uniq -c | sort -rn | awk '$1 >= 2 {print $2}' > old-urls.txt
+php artisan legacy:verify --urls=old-urls.txt
+```
+
+**Go-live rule:** run `legacy:import`, then `legacy:verify` (with `--urls`) on the production server; switch DNS only when it exits with code 0. After go-live, watch *Hệ thống → Chuyển hướng URL* and the server's 404 log for a few weeks and add redirects for anything new.
+
 ## Old URLs (SEO)
 
 Every old URL is answered with a **301** to its new address, so Google rankings and bookmarks carry over. Handled by `App\Services\LegacyUrlResolver` (fallback route); admin-defined redirects (*Hệ thống → Chuyển hướng URL*) take priority.

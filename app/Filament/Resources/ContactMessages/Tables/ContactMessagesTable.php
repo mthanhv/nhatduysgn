@@ -53,8 +53,8 @@ class ContactMessagesTable
                 SelectFilter::make('topic')->label('Chủ đề')->options(ContactMessage::TOPICS),
             ])
             ->recordActions([
-                ViewAction::make(),
-                DeleteAction::make(),
+                ViewAction::make()->iconButton()->tooltip('Xem'),
+                DeleteAction::make()->iconButton()->tooltip('Xóa'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

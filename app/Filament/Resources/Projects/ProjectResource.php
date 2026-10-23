@@ -29,6 +29,8 @@ class ProjectResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Dự án';
 
+    protected static bool $hasTitleCaseModelLabel = false;
+
     protected static ?string $recordTitleAttribute = 'title';
 
     public static function form(Schema $schema): Schema

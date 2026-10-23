@@ -35,6 +35,8 @@ class ClientResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Khách hàng tiêu biểu';
 
+    protected static bool $hasTitleCaseModelLabel = false;
+
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema
@@ -60,7 +62,7 @@ class ClientResource extends Resource
                 TextColumn::make('name')->label('Khách hàng')->searchable(),
                 ToggleColumn::make('is_published')->label('Hiển thị'),
             ])
-            ->recordActions([EditAction::make(), DeleteAction::make()])
+            ->recordActions([EditAction::make()->iconButton()->tooltip('Chỉnh sửa'), DeleteAction::make()->iconButton()->tooltip('Xóa')])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])]);
     }
 

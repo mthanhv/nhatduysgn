@@ -6,6 +6,7 @@ use App\Filament\Support\Uploads;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -63,6 +64,12 @@ class ProductForm
                                 TextInput::make('origin')->label('Xuất xứ')->placeholder('vd. Made in Germany')->maxLength(255),
                                 TextInput::make('sort_order')->label('Thứ tự hiển thị')->numeric()->default(0),
                                 Textarea::make('summary')->label('Mô tả ngắn')->rows(2)->maxLength(500)->columnSpanFull(),
+                                TagsInput::make('keywords')
+                                    ->label('Từ khóa tìm kiếm')
+                                    ->separator(',')
+                                    ->placeholder('vd. bôi trơn, chống xoay')
+                                    ->helperText('Giúp khách tìm thấy sản phẩm khi gõ các từ này (không hiển thị trên trang).')
+                                    ->columnSpanFull(),
                                 Toggle::make('is_published')->label('Hiển thị trên website')->default(true),
                                 Toggle::make('is_featured')->label('Sản phẩm tiêu biểu (trang chủ)'),
                             ]),

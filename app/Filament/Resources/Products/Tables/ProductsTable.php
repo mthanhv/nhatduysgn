@@ -9,6 +9,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
@@ -25,20 +26,30 @@ class ProductsTable
     {
         return $table
             ->defaultSort('updated_at', 'desc')
+            ->defaultPaginationPageOption(25)
             ->columns([
                 ImageColumn::make('image')->label('Ảnh')->disk('public')->square()->imageSize(56),
                 TextColumn::make('name')
                     ->label('Tên sản phẩm')
                     ->searchable(['name', 'code'])
                     ->sortable()
+                    ->weight(FontWeight::Medium)
                     ->wrap()
+                    ->lineClamp(2)
+                    ->tooltip(fn (Product $record): string => $record->name)
                     ->description(fn (Product $record): ?string => $record->code),
-                TextColumn::make('category.name')->label('Nhóm')->sortable()->toggleable()->wrap(),
-                TextColumn::make('brand.name')->label('Thương hiệu')->sortable()->toggleable(),
+                TextColumn::make('category.name')
+                    ->label('Nhóm')
+                    ->sortable()
+                    ->toggleable()
+                    ->limit(26)
+                    ->tooltip(fn (Product $record): ?string => $record->category?->name)
+                    ->color('gray'),
+                TextColumn::make('brand.name')->label('Thương hiệu')->badge()->color('gray')->sortable()->toggleable(),
                 ToggleColumn::make('is_published')->label('Hiển thị'),
-                IconColumn::make('is_featured')->label('Tiêu biểu')->boolean()->toggleable(),
+                IconColumn::make('is_featured')->label('Tiêu biểu')->boolean()->trueIcon(Heroicon::Star)->falseIcon(Heroicon::OutlinedStar)->trueColor('warning')->falseColor('gray')->toggleable(),
                 TextColumn::make('view_count')->label('Lượt xem')->numeric()->sortable()->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')->label('Cập nhật')->since()->sortable()->toggleable(),
+                TextColumn::make('updated_at')->label('Cập nhật')->since()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('product_category_id')->label('Nhóm')->relationship('category', 'name')->searchable()->preload(),
@@ -48,13 +59,16 @@ class ProductsTable
             ])
             ->recordActions([
                 Action::make('view_on_site')
-                    ->label('Xem')
+                    ->label('Xem trên website')
                     ->icon(Heroicon::OutlinedArrowTopRightOnSquare)
+                    ->iconButton()
+                    ->color('gray')
+                    ->tooltip('Xem trên website')
                     ->url(fn (Product $record): string => route('products.show', $record))
                     ->openUrlInNewTab()
                     ->visible(fn (Product $record): bool => $record->is_published),
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()->iconButton()->tooltip('Chỉnh sửa'),
+                DeleteAction::make()->iconButton()->tooltip('Xóa'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

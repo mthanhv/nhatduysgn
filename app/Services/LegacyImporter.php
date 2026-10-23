@@ -39,6 +39,9 @@ class LegacyImporter
 
     private ?Closure $output = null;
 
+    /** @var array<int, string>|null */
+    private ?array $productTags = null;
+
     public function __construct(
         private LegacyHtml $html,
         private string $connection = 'legacy',
@@ -105,7 +108,7 @@ class LegacyImporter
 
             /** @var SplFileInfo $file */
             foreach ($iterator as $file) {
-                if (! $file->isFile() || $file->isLink() || ! $this->isSafeUpload($file)) {
+                if (! $file->isFile() || $file->isLink() || ! self::isSafeUpload($file)) {
                     continue;
                 }
 
@@ -208,8 +211,9 @@ class LegacyImporter
                 }
 
                 $attachment = $this->legacyFile('products/attachments', $row->attachment ?? null);
+                $keywords = $this->productTags()[$row->id] ?? null;
 
-                Product::withoutTimestamps(function () use ($row, $existing, $attachment): void {
+                Product::withoutTimestamps(function () use ($row, $existing, $attachment, $keywords): void {
                     $product = $existing ?? new Product(['legacy_id' => $row->id]);
                     $product->fill([
                         'name' => $this->cleanTitle($row->title),
@@ -217,6 +221,7 @@ class LegacyImporter
                         'origin' => $this->nullableTrim($row->origin),
                         'description' => $this->html->clean($row->content),
                         'specifications' => $this->html->clean($row->specification),
+                        'keywords' => $keywords,
                         'image' => $this->legacyFile('products', $row->image),
                         'documents' => $attachment ? [['title' => $row->attachment, 'file' => $attachment]] : null,
                         'product_category_id' => $this->categoryMap[$row->product_category_id] ?? null,
@@ -378,6 +383,22 @@ class LegacyImporter
         });
     }
 
+    /**
+     * Old product tags as "tag one, tag two" per legacy product ID.
+     *
+     * @return array<int, string>
+     */
+    private function productTags(): array
+    {
+        return $this->productTags ??= $this->db()->table('products_tags')
+            ->join('tags', 'tags.id', '=', 'products_tags.tag_id')
+            ->orderBy('tags.title')
+            ->get(['products_tags.product_id', 'tags.title'])
+            ->groupBy('product_id')
+            ->map(fn ($tags) => $tags->pluck('title')->map(fn ($title) => trim($title))->filter()->unique()->implode(', '))
+            ->all();
+    }
+
     private function ensureMaps(): void
     {
         if ($this->categoryMap === []) {
@@ -395,8 +416,11 @@ class LegacyImporter
 
     /**
      * Only plain documents/images are copied, never anything that could execute (the old site was hit by webshells).
+     *
+     * A file is rejected when its name looks executable, its extension is not whitelisted, its real type does not
+     * match its extension, or it contains PHP code anywhere.
      */
-    private function isSafeUpload(SplFileInfo $file): bool
+    public static function isSafeUpload(SplFileInfo $file): bool
     {
         $name = $file->getFilename();
         $extension = strtolower($file->getExtension());
@@ -409,13 +433,37 @@ class LegacyImporter
             return false;
         }
 
-        $head = (string) @file_get_contents($file->getPathname(), false, null, 0, 4096);
+        $mime = (string) (new \finfo(FILEINFO_MIME_TYPE))->file($file->getPathname());
+        $expected = match (true) {
+            in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'], true) => 'image/',
+            $extension === 'pdf' => 'application/pdf',
+            default => null,
+        };
 
-        if (preg_match('/<\?(php|=)/i', $head)) {
+        if ($expected !== null && $file->getSize() > 0 && ! str_starts_with($mime, $expected)) {
             return false;
         }
 
-        return ! ($extension === 'svg' && preg_match('/<script\b|\bon[a-z]+\s*=/i', $head));
+        $handle = fopen($file->getPathname(), 'rb');
+        $previous = '';
+
+        while ($handle && ! feof($handle)) {
+            $chunk = $previous.fread($handle, 1024 * 1024);
+
+            if (stripos($chunk, '<?php') !== false || ($extension === 'svg' && preg_match('/<script\b|\bon[a-z]+\s*=/i', $chunk))) {
+                fclose($handle);
+
+                return false;
+            }
+
+            $previous = substr($chunk, -16);
+        }
+
+        if ($handle) {
+            fclose($handle);
+        }
+
+        return true;
     }
 
     private function legacyFile(string $folder, ?string $filename): ?string
