@@ -57,14 +57,15 @@ Admin accounts: create the first one with `php artisan make:filament-user`; afte
 
 ## Migrating data from the old site
 
-`php artisan legacy:import` copies everything from the old database and upload folders. It is **idempotent** — every record keeps its old ID (`legacy_id` / `legacy_keys`), so it can be run again safely.
+`php artisan legacy:import` copies everything from the old database and upload folders. It is **idempotent** — every record keeps its old ID (`legacy_id` / `legacy_ids` / `legacy_keys`), so it can be run again safely.
 
 | Step (`--step=`) | Old → new |
 |---|---|
 | `files` | `app/webroot/files` and `media` → `public/uploads/legacy/…` (images, PDF, Office, ZIP only; files whose name or content looks like PHP are skipped) |
-| `categories` | `product_categories` → product groups (tree kept) |
+| `categories` | `product_categories` → product groups (temporarily, as on the old site) |
 | `brands` | `brands` + `suppliers` → brands (merged by name, e.g. supplier FAG → SCHAEFFLER; aliases in `config/legacy.php`) |
 | `products` | `products` → products (description/specs cleaned of scripts and inline styles, old image links rewritten, attachment → document) |
+| `catalog` | merges the 86 old categories into the 43 standard groups of `config/catalog.php` (see below) |
 | `posts` | `articles` in categories News/Project/Event → news |
 | `clients` | `customers` → client logos |
 | `contacts` | `contacts` → contact inbox (marked as read) |
@@ -75,6 +76,17 @@ php artisan legacy:import                         # everything
 php artisan legacy:import --step=products         # one step
 php artisan legacy:import --skip-existing         # only add new records, keep admin edits
 ```
+
+### Product groups (`config/catalog.php`)
+
+The old site had 86 categories organised partly by brand and partly by application, with duplicates and misfiled products. They are standardised into 13 groups by application with 30 sub-groups (brands have their own pages). `config/catalog.php` lists, for each group, the old category IDs it absorbs and any old product IDs moved to it explicitly.
+
+```bash
+php artisan catalog:restructure --dry-run   # show what would change
+php artisan catalog:restructure             # apply (also runs as the `catalog` import step)
+```
+
+It is safe to re-run: products move to their group, old IDs stay on the group (so `/products/category:{id}` still redirects), emptied old categories are deleted, and once a group has been applied its name, icon, image and texts belong to editors. Groups created in the admin are never touched. To change the structure, edit the config and run the command again; `legacy:verify` checks every old category and product against it.
 
 Connection settings: `LEGACY_DB_*` and `LEGACY_WEBROOT` in `.env`. The 4 services are created by `php artisan db:seed` (the old site stored them as one article).
 

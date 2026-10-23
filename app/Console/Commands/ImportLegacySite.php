@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 
 #[Signature('legacy:import
-    {--step=* : Only run these steps (files, categories, brands, products, posts, clients, contacts, tags)}
+    {--step=* : Only run these steps (files, categories, brands, products, catalog, posts, clients, contacts, tags)}
     {--skip-existing : Leave records that were already imported untouched (keeps edits made in the admin)}')]
 #[Description('Import products, categories, brands, news, clients, contact messages and uploads from the old nhatduysgn.com database')]
 class ImportLegacySite extends Command

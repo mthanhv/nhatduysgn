@@ -66,31 +66,31 @@ class LegacyVerifier
         return $this->results;
     }
 
+    /**
+     * Old categories are merged into the standard groups (config/catalog.php), so each old ID must live on a group.
+     */
     private function checkCategories(): void
     {
         $rows = $this->db()->table('product_categories')->get();
-        $new = ProductCategory::query()->whereNotNull('legacy_id')->get()->keyBy('legacy_id');
+        $groups = ProductCategory::query()->get()->keyBy('id');
+        $map = ProductCategory::legacyMap();
         $problems = [];
 
         foreach ($rows as $row) {
-            $category = $new->get($row->id);
+            $group = $groups->get($map[$row->id] ?? 0);
 
-            if (! $category) {
+            if (! $group) {
                 $problems[] = "Nhóm #{$row->id} “{$row->name}” chưa được chuyển.";
 
                 continue;
             }
 
-            if ($row->parent_id && $category->parent?->legacy_id !== (int) $row->parent_id) {
-                $problems[] = "Nhóm #{$row->id} “{$row->name}” sai nhóm cha.";
-            }
-
-            if ($category->is_published !== (bool) $row->publish) {
-                $problems[] = "Nhóm #{$row->id} khác trạng thái hiển thị.";
+            if ($row->publish && ! $group->is_published) {
+                $problems[] = "Nhóm #{$row->id} “{$row->name}” đã gộp vào nhóm đang ẩn “{$group->name}”.";
             }
         }
 
-        $this->record('Nhóm sản phẩm', $rows->count(), $problems);
+        $this->record('Nhóm sản phẩm', $rows->count(), $problems, ["{$rows->count()} nhóm cũ được gộp thành {$groups->count()} nhóm."]);
     }
 
     private function checkBrands(): void
@@ -117,13 +117,16 @@ class LegacyVerifier
         $tags = $this->db()->table('products_tags')->join('tags', 'tags.id', '=', 'products_tags.tag_id')
             ->get(['products_tags.product_id', 'tags.title'])->groupBy('product_id');
         $products = Product::query()->whereNotNull('legacy_id')->with(['category', 'brand'])->get()->keyBy('legacy_id');
+        $categoryMap = ProductCategory::legacyMap();
+        $groupIds = ProductCategory::query()->pluck('id', 'slug');
+        $overrides = collect(CatalogRestructurer::productOverrides())->map(fn (string $key) => $groupIds->get($key));
         // Old products may point at brands/suppliers that were deleted on the old site; those had no brand there either.
         $existingBrands = $this->db()->table('brands')->pluck('id')->flip();
         $existingSuppliers = $this->db()->table('suppliers')->pluck('id')->flip();
         $problems = [];
         $count = 0;
 
-        $this->db()->table('products')->orderBy('id')->chunk(200, function ($rows) use ($products, $tags, $existingBrands, $existingSuppliers, &$problems, &$count): void {
+        $this->db()->table('products')->orderBy('id')->chunk(200, function ($rows) use ($products, $tags, $existingBrands, $existingSuppliers, $categoryMap, $overrides, &$problems, &$count): void {
             foreach ($rows as $row) {
                 $count++;
                 $product = $products->get($row->id);
@@ -139,7 +142,9 @@ class LegacyVerifier
                     $problems[] = "{$label}: tên khác (“{$product->name}”).";
                 }
 
-                if ($row->product_category_id && $product->category?->legacy_id !== (int) $row->product_category_id && $this->db()->table('product_categories')->where('id', $row->product_category_id)->exists()) {
+                $expectedCategory = $overrides->get($row->id) ?? $categoryMap[$row->product_category_id] ?? null;
+
+                if ($expectedCategory && $product->product_category_id !== $expectedCategory) {
                     $problems[] = "{$label}: sai nhóm sản phẩm.";
                 }
 

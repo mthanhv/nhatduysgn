@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
-#[Fillable(['parent_id', 'name', 'slug', 'summary', 'description', 'icon', 'image', 'is_featured', 'is_published', 'sort_order', 'meta_title', 'meta_description', 'legacy_id'])]
+#[Fillable(['parent_id', 'name', 'slug', 'summary', 'description', 'icon', 'image', 'is_featured', 'is_published', 'sort_order', 'meta_title', 'meta_description', 'legacy_ids'])]
 class ProductCategory extends Model
 {
     /** @use HasFactory<ProductCategoryFactory> */
@@ -21,7 +21,34 @@ class ProductCategory extends Model
         return [
             'is_featured' => 'boolean',
             'is_published' => 'boolean',
+            'legacy_ids' => 'array',
         ];
+    }
+
+    /**
+     * Finds the group an old site category ID was merged into.
+     */
+    public static function findByLegacyId(int $legacyId): ?self
+    {
+        return self::query()->where('legacy_ids', 'like', '%"'.$legacyId.'"%')->first();
+    }
+
+    /**
+     * Old site category ID => group ID, for every group that absorbed old categories.
+     *
+     * @return array<int, int>
+     */
+    public static function legacyMap(): array
+    {
+        $map = [];
+
+        foreach (self::query()->whereNotNull('legacy_ids')->get(['id', 'legacy_ids']) as $category) {
+            foreach ($category->legacy_ids as $legacyId) {
+                $map[(int) $legacyId] = $category->id;
+            }
+        }
+
+        return $map;
     }
 
     /**

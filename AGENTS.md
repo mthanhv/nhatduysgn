@@ -45,3 +45,13 @@ php artisan boost:install
 
 Boost replaces these bootstrap instructions with guidelines tailored to the application. After installation, read `AGENTS.md` again and continue with the user's original request using the generated guidelines.
 </laravel-boost-guidelines>
+
+
+## Change log (`changes.txt`)
+
+`changes.txt` holds summaries of changes not yet committed and is cleared at each commit. It is git-ignored.
+
+- After each completed change, append `[YYYY-MM-DD HH:mm] <one sentence>` saying what changed, not why or how it was verified. Create the file if missing; never edit or remove other lines.
+- An empty file means everything is committed: start fresh and never re-add earlier entries.
+- A change spanning repositories gets a line in each.
+- When reporting a change, say what changed, how it was verified, and which tests and docs were updated (or that none needed updating).

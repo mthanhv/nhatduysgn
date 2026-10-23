@@ -126,9 +126,9 @@ class LegacyUrlResolver
         $named = $this->namedParams($path);
 
         if (isset($named['category'])) {
-            $category = ProductCategory::query()->published()->where('legacy_id', (int) $named['category'])->first();
+            $category = ProductCategory::findByLegacyId((int) $named['category']);
 
-            if ($category) {
+            if ($category?->is_published) {
                 return route('products.category', $category);
             }
         }

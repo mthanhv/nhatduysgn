@@ -37,11 +37,13 @@ class LegacyRedirectTest extends TestCase
 
     public function test_old_category_urls_with_named_params_redirect_to_category(): void
     {
-        $category = ProductCategory::factory()->create(['legacy_id' => 85]);
+        $category = ProductCategory::factory()->create(['legacy_ids' => ['85', '113']]);
+        ProductCategory::factory()->create(['legacy_ids' => ['8']]);
 
         $this->get('/products/category:85/title:dung-cu-thao-lap')->assertStatus(301)->assertRedirect(route('products.category', $category));
         $this->get('/products/category%3A85/title%3Adung-cu')->assertRedirect(route('products.category', $category));
         $this->get('/products/category:85/12/34/page:2')->assertRedirect(route('products.category', $category));
+        $this->get('/products/category:113/title:bao-tri')->assertRedirect(route('products.category', $category), 'Merged old categories redirect to the group');
     }
 
     public function test_old_brand_and_supplier_urls_redirect_to_merged_brand(): void

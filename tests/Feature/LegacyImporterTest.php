@@ -9,6 +9,7 @@ use App\Models\Post;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Redirect;
+use App\Services\CatalogRestructurer;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -49,10 +50,13 @@ class LegacyImporterTest extends TestCase
     {
         $this->artisan('legacy:import')->assertSuccessful();
 
-        $root = ProductCategory::where('legacy_id', 85)->sole();
-        $child = ProductCategory::where('legacy_id', 114)->sole();
+        $root = ProductCategory::findByLegacyId(85);
+        $child = ProductCategory::findByLegacyId(114);
+        $this->assertSame('dung-cu-xiet-bu-long', $root->slug, 'Old categories are merged into the standard groups');
+        $this->assertSame('dau-xiet-thuy-luc', $child->slug);
         $this->assertSame($root->id, $child->parent_id);
         $this->assertSame('wrench', $root->icon);
+        $this->assertSame(0, ProductCategory::whereNotIn('slug', CatalogRestructurer::keys())->count(), 'Emptied old categories are removed');
 
         $ith = Brand::whereRaw('UPPER(name) = ?', ['ITH'])->sole();
         $this->assertEqualsCanonicalizing(['brand:19', 'supplier:30'], $ith->legacy_keys);

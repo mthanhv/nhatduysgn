@@ -119,3 +119,13 @@ Before relying on a package's API, confirm its installed version:
 - Run `vendor/bin/phpunit` to call the test runner directly. It accepts the same file path and `--filter=testName` arguments.
 
 </laravel-boost-guidelines>
+
+
+## Change log (`changes.txt`)
+
+`changes.txt` holds summaries of changes not yet committed and is cleared at each commit. It is git-ignored.
+
+- After each completed change, append `[YYYY-MM-DD HH:mm] <one sentence>` saying what changed, not why or how it was verified. Create the file if missing; never edit or remove other lines.
+- An empty file means everything is committed: start fresh and never re-add earlier entries.
+- A change spanning repositories gets a line in each.
+- When reporting a change, say what changed, how it was verified, and which tests and docs were updated (or that none needed updating).

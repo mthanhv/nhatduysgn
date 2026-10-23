@@ -1,0 +1,18 @@
+[2026-10-23 19:38] Scaffolded the Laravel 13 + Filament 5 application with a Docker dev stack (PHP 8.3/Apache, MariaDB with the old site dump as a "legacy" database, Mailpit).
+[2026-10-23 19:38] Added the public website (design option A): home, about, services, product overview, category, brand, product detail, projects, news, article, contact, 404, sitemap.xml and robots.txt.
+[2026-10-23 19:38] Added the contact form with validation, honeypot, rate limiting, inbox storage and email notification to sales.
+[2026-10-23 19:38] Added the Filament admin for products, product groups, brands, services, projects, news, clients, certificates, contact inbox, URL redirects, admin users and website settings.
+[2026-10-23 19:38] Added the legacy:import command that migrates the old database and upload folders, rejecting files that could contain PHP.
+[2026-10-23 19:38] Added the fallback router that 301-redirects every old site URL pattern and admin-managed redirects to the new pages.
+[2026-10-23 19:38] Added the legacy:verify command that reconciles old records, files, content links and URLs against the new site.
+[2026-10-23 19:38] Added a product search-keywords field and imported the old product tags into it.
+[2026-10-23 19:38] Added ServiceSeeder for the four services plus sample ProjectSeeder and PostSeeder data (run explicitly, not in db:seed).
+[2026-10-23 19:38] Restyled the admin with the company brand (navy sidebar, logo red, logo, branded login) and a dashboard with welcome banner, stats, content checklist and latest messages.
+[2026-10-23 19:38] Redesigned the news listing (featured post, card grid, search, most-read sidebar) and the article page (reading time, share buttons, previous/next).
+[2026-10-23 19:38] Added an address-based Google Maps embed on the contact page with an optional exact embed link in settings.
+[2026-10-23 19:38] Changed the product group, service and project admin forms to a main column plus sidebar layout.
+[2026-10-23 19:38] Redesigned the services page with overview cards, per-service equipment brands and related products, benefits, process timeline, projects and FAQ.
+[2026-10-23 19:38] Added the changes.txt change-log rule to CLAUDE.md and AGENTS.md and git-ignored changes.txt.
+[2026-10-23 19:52] Consolidated the 86 old product categories into 13 standard groups with 30 sub-groups defined in config/catalog.php, applied by the new catalog:restructure command and the legacy:import catalog step.
+[2026-10-23 19:52] Replaced product_categories.legacy_id with a legacy_ids list so merged groups keep every old category ID for redirects and legacy:verify.
+[2026-10-23 19:52] Moved misfiled old products into their proper groups (e.g. JBE flange facers out of Loctite, Schaeffler heaters, Kemet lapping fluid).

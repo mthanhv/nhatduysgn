@@ -29,7 +29,7 @@ use SplFileInfo;
  */
 class LegacyImporter
 {
-    public const STEPS = ['files', 'categories', 'brands', 'products', 'posts', 'clients', 'contacts', 'tags'];
+    public const STEPS = ['files', 'categories', 'brands', 'products', 'catalog', 'posts', 'clients', 'contacts', 'tags'];
 
     /** @var array<int, int> */
     private array $categoryMap = [];
@@ -44,6 +44,7 @@ class LegacyImporter
 
     public function __construct(
         private LegacyHtml $html,
+        private CatalogRestructurer $catalog,
         private string $connection = 'legacy',
         private ?string $webroot = null,
         private bool $skipExisting = false,
@@ -128,22 +129,28 @@ class LegacyImporter
         return $copied;
     }
 
+    /**
+     * Old categories are imported as they were; the catalog step then merges them into the standard groups.
+     * Groups already in the structure are never overwritten here, only mapped.
+     */
     public function importCategories(): int
     {
         $rows = $this->db()->table('product_categories')->orderBy('lft')->get();
         $icons = config('legacy.category_icons', []);
         $featured = config('legacy.featured_category_ids', []);
+        $groupKeys = CatalogRestructurer::keys();
+        $imported = [];
 
         foreach ($rows as $row) {
-            $existing = ProductCategory::query()->where('legacy_id', $row->id)->first();
+            $existing = ProductCategory::findByLegacyId($row->id);
 
-            if ($existing && $this->skipExisting) {
+            if ($existing && ($this->skipExisting || in_array($existing->slug, $groupKeys, true))) {
                 $this->categoryMap[$row->id] = $existing->id;
 
                 continue;
             }
 
-            $category = $existing ?? new ProductCategory(['legacy_id' => $row->id]);
+            $category = $existing ?? new ProductCategory(['legacy_ids' => [(string) $row->id]]);
             $category->fill([
                 'name' => $this->cleanTitle($row->name),
                 'description' => $this->html->clean($row->description ?? null),
@@ -155,11 +162,12 @@ class LegacyImporter
             ])->save();
 
             $this->categoryMap[$row->id] = $category->id;
+            $imported[$row->id] = $category->id;
         }
 
         foreach ($rows as $row) {
-            if ($row->parent_id && isset($this->categoryMap[$row->parent_id])) {
-                ProductCategory::query()->whereKey($this->categoryMap[$row->id])->update(['parent_id' => $this->categoryMap[$row->parent_id]]);
+            if ($row->parent_id && isset($imported[$row->id], $this->categoryMap[$row->parent_id])) {
+                ProductCategory::query()->whereKey($imported[$row->id])->update(['parent_id' => $this->categoryMap[$row->parent_id]]);
             }
         }
 
@@ -244,6 +252,21 @@ class LegacyImporter
         $this->summarizeCategories();
 
         return $count;
+    }
+
+    /**
+     * Merges the imported old categories into the standard product groups (config/catalog.php).
+     */
+    public function importCatalog(): int
+    {
+        $report = $this->catalog->run();
+        $this->categoryMap = [];
+
+        foreach ($report['kept'] as $name) {
+            $this->say("  Giữ nguyên nhóm ngoài cấu trúc: {$name}");
+        }
+
+        return $report['moved'];
     }
 
     public function importPosts(): int
@@ -402,7 +425,7 @@ class LegacyImporter
     private function ensureMaps(): void
     {
         if ($this->categoryMap === []) {
-            $this->categoryMap = ProductCategory::query()->whereNotNull('legacy_id')->pluck('id', 'legacy_id')->all();
+            $this->categoryMap = ProductCategory::legacyMap();
         }
 
         if ($this->brandMap === []) {
