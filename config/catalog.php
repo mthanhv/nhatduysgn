@@ -14,6 +14,9 @@
 |           here and /products/category:{id} redirects here.
 | products  old site product IDs moved here explicitly (products that were
 |           misfiled on the old site or whose old category was deleted).
+| tbn       thietbinongong.com category IDs whose products are imported into
+|           this group by `legacy:import --site=tbn` (any key of
+|           legacy.product_sites works the same way).
 |
 | Names and icons are only used when a group is first created; after that,
 | editors own them in the admin.
@@ -72,9 +75,9 @@ return [
         'key' => 'thiet-bi-gia-cong-ong', 'name' => 'Thiết bị gia công ống & thép tấm', 'icon' => 'pipe', 'featured' => true,
         'legacy' => [98],
         'children' => [
-            ['key' => 'may-cat-vat-mep-ong', 'name' => 'Máy cắt & vát mép ống', 'legacy' => [146, 147]],
+            ['key' => 'may-cat-vat-mep-ong', 'name' => 'Máy cắt & vát mép ống', 'legacy' => [146, 147], 'tbn' => [86, 88, 89, 97, 98, 99]],
             ['key' => 'may-vat-mep-thep-tam', 'name' => 'Máy vát mép thép tấm', 'legacy' => [152]],
-            ['key' => 'may-phay-mat-bich', 'name' => 'Máy phay mặt bích', 'legacy' => [119]],
+            ['key' => 'may-phay-mat-bich', 'name' => 'Máy phay mặt bích', 'legacy' => [119], 'tbn' => [90]],
             ['key' => 'dung-cu-kep-gia-do-ong', 'name' => 'Dụng cụ kẹp & giá đỡ ống', 'products' => [425, 427, 428, 429, 432]],
         ],
     ],
@@ -118,5 +121,15 @@ return [
     [
         'key' => 'thiet-bi-nang-ha', 'name' => 'Thiết bị nâng hạ', 'icon' => 'hoist',
         'legacy' => [95, 144],
+    ],
+    [
+        'key' => 'thiet-bi-nong-ong', 'name' => 'Thiết bị nong ống', 'icon' => 'tube',
+        'children' => [
+            ['key' => 'dau-nong-ong-trao-doi-nhiet', 'name' => 'Đầu nong ống cho thiết bị trao đổi nhiệt', 'tbn' => [68, 78]],
+            ['key' => 'dau-nong-ong-lo-hoi', 'name' => 'Đầu nong ống cho lò hơi', 'tbn' => [79]],
+            ['key' => 'dau-nong-ong-thuc-pham', 'name' => 'Đầu nong ống ngành thực phẩm', 'tbn' => [80]],
+            ['key' => 'may-nong-ong', 'name' => 'Máy nong ống & bộ điều khiển', 'tbn' => [70, 91, 92, 93, 94, 96]],
+            ['key' => 'dung-cu-rut-ong', 'name' => 'Dụng cụ rút ống', 'tbn' => [72, 95]],
+        ],
     ],
 ];

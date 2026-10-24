@@ -70,7 +70,11 @@ class ManageSiteSettings extends Page
                             TextInput::make('tax_code')->label('Mã số thuế'),
                             TextInput::make('founded_year')->label('Năm thành lập'),
                             TextInput::make('working_hours')->label('Giờ làm việc'),
-                            TextInput::make('address')->label('Địa chỉ')->required()->columnSpanFull(),
+                            TextInput::make('address')->label('Địa chỉ trụ sở')->required()->columnSpanFull(),
+                            TextInput::make('office_address')
+                                ->label('Địa chỉ văn phòng đại diện (VPĐD)')
+                                ->helperText('Bản đồ trên trang Liên hệ hiển thị theo địa chỉ này. Để trống để ẩn và dùng địa chỉ trụ sở.')
+                                ->columnSpanFull(),
                             TextInput::make('map_url')->label('Link Google Maps (nút Chỉ đường)')->url()->columnSpanFull(),
                             TextInput::make('map_embed_url')
                                 ->label('Link nhúng bản đồ (tùy chọn)')
@@ -89,7 +93,7 @@ class ManageSiteSettings extends Page
                             TextInput::make('home_hero_caption_brand')->label('Chú thích ảnh — dòng 1'),
                             TextInput::make('home_hero_caption_title')->label('Chú thích ảnh — dòng 2'),
                         ]),
-                        Section::make('Số liệu nổi bật')->schema([
+                        Section::make('Số liệu nổi bật')->description('Hiển thị trên trang Giới thiệu.')->schema([
                             Repeater::make('home_stats')->hiddenLabel()->schema([
                                 TextInput::make('value')->label('Số')->required(),
                                 TextInput::make('label')->label('Nhãn')->required(),
@@ -104,7 +108,7 @@ class ManageSiteSettings extends Page
                             ])->columns(2)->reorderable()->addActionLabel('Thêm điểm'),
                             Uploads::image('home_about_image', 'settings')->label('Ảnh minh họa'),
                         ]),
-                        Section::make('Ngành công nghiệp phục vụ')->schema([
+                        Section::make('Ngành công nghiệp phục vụ')->description('Hiển thị trên trang Giới thiệu.')->schema([
                             Repeater::make('industries')->hiddenLabel()->schema([
                                 TextInput::make('name')->label('Ngành')->required(),
                                 Select::make('icon')->label('Biểu tượng')->options([
@@ -200,7 +204,7 @@ class ManageSiteSettings extends Page
     {
         return [
             'company_name', 'brand_name', 'tagline', 'phone', 'fax', 'email', 'contact_notify_email', 'zalo', 'tax_code', 'founded_year',
-            'working_hours', 'address', 'map_url', 'map_embed_url',
+            'working_hours', 'address', 'office_address', 'map_url', 'map_embed_url',
             'home_hero_eyebrow', 'home_hero_title', 'home_hero_text', 'home_hero_image', 'home_hero_caption_brand', 'home_hero_caption_title',
             'home_stats', 'home_about_title', 'home_about_text', 'home_about_points', 'home_about_image', 'industries',
             'about_hero_title', 'about_hero_text', 'about_hero_image', 'about_intro_title', 'about_intro_body', 'about_pillars',

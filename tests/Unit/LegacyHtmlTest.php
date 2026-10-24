@@ -54,4 +54,20 @@ class LegacyHtmlTest extends TestCase
         $this->assertNull($this->html->clean('<p>&nbsp;</p>'));
         $this->assertNull($this->html->clean(null));
     }
+
+    public function test_upload_links_follow_the_real_file_name_case(): void
+    {
+        $webroot = sys_get_temp_dir().'/legacy-html-'.uniqid();
+        mkdir($webroot.'/media', 0777, true);
+        touch($webroot.'/media/Máy nong ống2_2.PNG');
+
+        $html = $this->html->withWebroot($webroot);
+
+        $this->assertSame('/uploads/legacy/media/M%C3%A1y%20nong%20%E1%BB%91ng2_2.PNG', $html->rewriteUrl('/media/M%C3%A1y%20nong%20%E1%BB%91ng2_2.png'));
+        $this->assertSame('/uploads/legacy/media/missing.png', $html->rewriteUrl('/media/missing.png'), 'Links to files that do not exist are left alone');
+
+        unlink($webroot.'/media/Máy nong ống2_2.PNG');
+        rmdir($webroot.'/media');
+        rmdir($webroot);
+    }
 }

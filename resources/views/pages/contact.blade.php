@@ -33,7 +33,7 @@
             @endif
             <a class="card channel" href="{{ setting('map_url') }}" target="_blank" rel="noopener">
                 <span class="icon-tile icon-tile--accent"><x-ui-icon name="pin" :size="24" :stroke="1.9" /></span>
-                <span><span class="label">Văn phòng</span><br><span class="value">{{ setting('address') }}</span></span>
+                <span><span class="label">{{ setting('office_address') ? 'Văn phòng đại diện' : 'Văn phòng' }}</span><br><span class="value">{{ setting('office_address') ?: setting('address') }}</span></span>
                 <span class="action">Xem bản đồ →</span>
             </a>
         </div>
@@ -107,7 +107,7 @@
             <div class="map">
                 {{-- Exact embed link from Settings if provided; otherwise Google Maps locates the address (no API key needed). --}}
                 <iframe
-                    src="{{ setting('map_embed_url') ?: 'https://maps.google.com/maps?q='.urlencode(setting('address').', Việt Nam').'&hl=vi&z=16&output=embed' }}"
+                    src="{{ setting('map_embed_url') ?: 'https://maps.google.com/maps?q='.urlencode((setting('office_address') ?: setting('address')).', Việt Nam').'&hl=vi&z=16&output=embed' }}"
                     loading="lazy"
                     referrerpolicy="no-referrer-when-downgrade"
                     allowfullscreen
@@ -119,7 +119,8 @@
                     <p style="font-size:18px;font-weight:800;margin-top:4px">{{ mb_strtoupper(setting('company_name')) }}</p>
                 </div>
                 <dl>
-                    <div><dt>Địa chỉ</dt><dd>{{ setting('address') }}</dd></div>
+                    <div><dt>Trụ sở</dt><dd>{{ setting('address') }}</dd></div>
+                    @if (setting('office_address'))<div><dt>VPĐD</dt><dd>{{ setting('office_address') }}</dd></div>@endif
                     <div><dt>Giờ làm việc</dt><dd>{{ setting('working_hours') }}</dd></div>
                     @if (setting('fax'))<div><dt>Fax</dt><dd>{{ setting('fax') }}</dd></div>@endif
                     <div><dt>Mã số thuế</dt><dd class="mono">{{ setting('tax_code') }}</dd></div>

@@ -54,4 +54,19 @@ return [
 
     'site_hosts' => ['nhatduysgn.com', 'www.nhatduysgn.com'],
 
+    /*
+    | Other old sites of the company with the same CakePHP structure, imported for their products only with
+    | `php artisan legacy:import --site=KEY`. Their old IDs are stored as "KEY:id" (product legacy_key,
+    | product group legacy_ids, brand legacy_keys) so they never clash with nhatduysgn.com's IDs.
+    */
+    'product_sites' => [
+        'tbn' => [
+            'name' => 'thietbinongong.com',
+            'connection' => 'legacy_tbn',
+            'webroot' => env('LEGACY_TBN_WEBROOT'),
+            'uploads_prefix' => 'legacy-tbn',
+            'hosts' => ['thietbinongong.com', 'www.thietbinongong.com'],
+        ],
+    ],
+
 ];

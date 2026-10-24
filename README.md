@@ -90,6 +90,21 @@ It is safe to re-run: products move to their group, old IDs stay on the group (s
 
 Connection settings: `LEGACY_DB_*` and `LEGACY_WEBROOT` in `.env`. The 4 services are created by `php artisan db:seed` (the old site stored them as one article).
 
+### Products from thietbinongong.com (`--site=tbn`)
+
+thietbinongong.com ran the same CakePHP code; only its **products** are migrated (with their brands, images, attachments and tags as keywords):
+
+```bash
+php artisan legacy:import --site=tbn           # steps: files, brands, products
+php artisan legacy:verify --site=tbn           # products, upload folders, old thietbinongong.com URLs
+```
+
+- Settings: `LEGACY_TBN_DB_DATABASE` (its dump; the Docker stack loads it into `legacy_tbn`) and `LEGACY_TBN_WEBROOT` (its `app/webroot`). Uploads are copied to `public/uploads/legacy-tbn/` (`files/products`, `files/suppliers`, `media` only).
+- Old IDs are stored as `tbn:{id}` (product `legacy_key`, group `legacy_ids`, brand `legacy_keys`) so they never clash with nhatduysgn.com's IDs.
+- Groups: the `tbn` lists in `config/catalog.php` (group *Thiết bị nong ống* plus the pipe cutting/flange facing groups).
+- A product whose code (or name) already exists among nhatduysgn.com's products is not duplicated; the existing product gets the `tbn:` ID and the import lists it.
+- If thietbinongong.com is later pointed at this server, its old product, category, brand and file URLs redirect to the new pages; other paths go to the homepage.
+
 ### Proving nothing was lost
 
 ```bash

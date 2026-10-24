@@ -17,13 +17,15 @@ return [
     'tagline' => 'Kỹ thuật bảo trì công nghiệp',
     'founded_year' => '2011',
     'address' => '68/4 Đường số 3, P. Bình Hưng Hoà, TP. Hồ Chí Minh',
+    // Representative office (VPĐD): shown next to the head office; the map and directions point here.
+    'office_address' => '10 Đường Ao Đôi, P. Bình Trị Đông, TP. Hồ Chí Minh',
     'phone' => '028 7300 7797',
     'fax' => '028 7304 7744',
     'email' => 'sales@nhatduysgn.com',
     'zalo' => null,
     'tax_code' => '0310880481',
     'working_hours' => 'Thứ 2 – Thứ 7, 8:00 – 17:00',
-    'map_url' => 'https://maps.google.com/?q=68/4+%C4%90%C6%B0%E1%BB%9Dng+s%E1%BB%91+3,+B%C3%ACnh+H%C6%B0ng+Ho%C3%A0,+TP.HCM',
+    'map_url' => 'https://maps.google.com/?q=10+%C4%90%C6%B0%E1%BB%9Dng+Ao+%C4%90%C3%B4i,+B%C3%ACnh+Tr%E1%BB%8B+%C4%90%C3%B4ng,+TP.+H%E1%BB%93+Ch%C3%AD+Minh',
     'map_embed_url' => null,
 
     'seo_title' => 'Nhật Duy — Thiết bị & giải pháp bảo trì công nghiệp (MRO)',

@@ -26,11 +26,13 @@ class ProductCategory extends Model
     }
 
     /**
-     * Finds the group an old site category ID was merged into.
+     * Finds the group an old site category ID was merged into; $site names another old site (legacy.product_sites).
      */
-    public static function findByLegacyId(int $legacyId): ?self
+    public static function findByLegacyId(int $legacyId, ?string $site = null): ?self
     {
-        return self::query()->where('legacy_ids', 'like', '%"'.$legacyId.'"%')->first();
+        $key = $site === null ? (string) $legacyId : "{$site}:{$legacyId}";
+
+        return self::query()->where('legacy_ids', 'like', '%"'.$key.'"%')->first();
     }
 
     /**
@@ -44,7 +46,9 @@ class ProductCategory extends Model
 
         foreach (self::query()->whereNotNull('legacy_ids')->get(['id', 'legacy_ids']) as $category) {
             foreach ($category->legacy_ids as $legacyId) {
-                $map[(int) $legacyId] = $category->id;
+                if (ctype_digit((string) $legacyId)) {
+                    $map[(int) $legacyId] = $category->id;
+                }
             }
         }
 

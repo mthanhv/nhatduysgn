@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Project;
 use App\Models\Service;
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -130,10 +131,35 @@ class PublicPagesTest extends TestCase
         $this->get(route('posts.show', $written))->assertOk()->assertSee('Tóm tắt riêng do biên tập viên viết.');
     }
 
-    public function test_contact_page_shows_map_of_the_office_address(): void
+    public function test_home_page_leaves_stats_industries_and_news_to_their_own_pages(): void
+    {
+        Post::factory()->create(['title' => 'Bài viết mới nhất về bảo trì']);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertDontSee('Số liệu nổi bật')
+            ->assertDontSee('Ngành công nghiệp phục vụ')
+            ->assertDontSee('Bài viết mới nhất về bảo trì');
+
+        $this->get(route('about'))->assertOk()->assertSee(config('site.industries.0.name'));
+    }
+
+    public function test_contact_page_shows_both_offices_and_maps_the_representative_office(): void
     {
         $this->get(route('contact'))
             ->assertOk()
+            ->assertSee(config('site.address'))
+            ->assertSee(config('site.office_address'))
+            ->assertSee('https://maps.google.com/maps?q='.urlencode(config('site.office_address').', Việt Nam'), false);
+    }
+
+    public function test_map_falls_back_to_head_office_when_representative_office_is_cleared(): void
+    {
+        Setting::putMany(['office_address' => null]);
+
+        $this->get(route('contact'))
+            ->assertOk()
+            ->assertDontSee('VPĐD')
             ->assertSee('https://maps.google.com/maps?q='.urlencode(config('site.address').', Việt Nam'), false);
     }
 

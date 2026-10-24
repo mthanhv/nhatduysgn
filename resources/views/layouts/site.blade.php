@@ -103,7 +103,8 @@
     <div class="container cols">
         <div>
             <p class="company">{{ mb_strtoupper(setting('company_name')) }}</p>
-            <p>{{ setting('address') }}</p>
+            <p>Trụ sở: {{ setting('address') }}</p>
+            @if (setting('office_address'))<p>VPĐD: {{ setting('office_address') }}</p>@endif
             <p>MST: {{ setting('tax_code') }}</p>
         </div>
         <div>

@@ -7,6 +7,7 @@ services:
     volumes:
       - ./:/var/www/html
       - ${LEGACY_WEBROOT_HOST:-../nhatduysgn.com/app/webroot}:/legacy-webroot:ro
+      - ${LEGACY_TBN_WEBROOT_HOST:-../thietbinongong.com/public_html/app/webroot}:/legacy-webroot-tbn:ro
     depends_on:
       db:
         condition: service_healthy
@@ -25,6 +26,8 @@ services:
       - db_data:/var/lib/mysql
       - ./docker/mariadb/01-legacy.sh:/docker-entrypoint-initdb.d/01-legacy.sh:ro
       - ${LEGACY_SQL_HOST:-../nhatduysgn.com/nha9921a_nhatduy.sql}:/legacy/dump.sql:ro
+      - ./docker/mariadb/02-legacy-tbn.sh:/docker-entrypoint-initdb.d/02-legacy-tbn.sh:ro
+      - ${LEGACY_TBN_SQL_HOST:-../thietbinongong.com/nha9921a_tbnongong.sql}:/legacy/tbn.sql:ro
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s

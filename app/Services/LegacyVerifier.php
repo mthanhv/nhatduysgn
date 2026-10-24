@@ -69,6 +69,102 @@ class LegacyVerifier
     /**
      * Old categories are merged into the standard groups (config/catalog.php), so each old ID must live on a group.
      */
+    /**
+     * Reconciles another old site imported for its products only (legacy.product_sites, e.g. "tbn").
+     *
+     * @return array<string, array{checked: int, problems: array<int, string>, notes: array<int, string>}>
+     */
+    public function runSite(string $site): array
+    {
+        $config = config("legacy.product_sites.{$site}");
+        $verifier = clone $this;
+        $verifier->connection = $config['connection'];
+        $verifier->webroot = $config['webroot'];
+        $verifier->results = [];
+
+        $verifier->checkSiteProducts($site);
+        $verifier->checkUploadFolders($config['uploads_prefix'], ProductSiteImporter::forSite($site)->uploadFolders());
+        $verifier->checkSiteUrls($site, $config['hosts'][0]);
+
+        return $verifier->results;
+    }
+
+    /**
+     * Every old product exists on the new site: imported (legacy_key "site:id") or linked to the same product
+     * imported from nhatduysgn.com.
+     */
+    private function checkSiteProducts(string $site): void
+    {
+        $products = Product::query()->where('legacy_key', 'like', $site.':%')->with('brand')->get()->keyBy('legacy_key');
+        $problems = [];
+        $linked = 0;
+        $rows = $this->db()->table('products')->orderBy('id')->get();
+
+        foreach ($rows as $row) {
+            $product = $products->get("{$site}:{$row->id}");
+            $label = "Sản phẩm #{$row->id} “".Str::limit(trim($row->title), 50).'”';
+
+            if (! $product) {
+                $problems[] = "{$label} chưa được chuyển.";
+
+                continue;
+            }
+
+            if ($product->legacy_id !== null) {
+                $linked++;
+
+                continue;
+            }
+
+            if ($this->normalize($product->name) !== $this->normalize($row->title)) {
+                $problems[] = "{$label}: tên khác (“{$product->name}”).";
+            }
+
+            if ($product->product_category_id !== ProductCategory::findByLegacyId((int) $row->product_category_id, $site)?->id) {
+                $problems[] = "{$label}: sai nhóm sản phẩm.";
+            }
+
+            if (! $product->brand && ($row->brand_id || $row->supplier_id)) {
+                $problems[] = "{$label}: mất thương hiệu.";
+            }
+
+            if ($product->is_published !== (bool) $row->publish) {
+                $problems[] = "{$label}: khác trạng thái hiển thị.";
+            }
+
+            if (filled($row->image) && $this->legacySourceExists('files/products/'.$row->image) && blank($product->image)) {
+                $problems[] = "{$label}: thiếu ảnh {$row->image}.";
+            }
+        }
+
+        $notes = $linked > 0 ? ["{$linked} sản phẩm trùng mã/tên với sản phẩm đã có từ nhatduysgn.com — không tạo bản sao, chỉ gắn ID cũ để URL cũ vẫn chuyển hướng."] : [];
+
+        $this->record('Sản phẩm', $rows->count(), $problems, $notes);
+    }
+
+    /**
+     * Old product and category URLs of the site, requested on its own host, must end on a page that returns 200.
+     */
+    private function checkSiteUrls(string $site, string $host): void
+    {
+        $db = $this->db();
+        $paths = collect()
+            ->merge($db->table('products')->where('publish', 1)->get(['id', 'title'])->map(fn ($row) => '/p'.$row->id.'-'.Str::slug($row->title).'.html'))
+            ->merge($db->table('product_categories')->where('publish', 1)->pluck('id')->map(fn ($id) => '/products/category:'.$id));
+        $problems = [];
+
+        foreach ($paths as $path) {
+            $target = $this->resolver->resolve($path, [], $host);
+            $status = $target === null ? 404 : $this->status($this->pathOf($target) ?? $target);
+
+            if ($status !== 200) {
+                $problems[] = "{$host}{$path} → ".($target ?? '404')." ({$status})";
+            }
+        }
+
+        $this->record('URL cũ của '.config("legacy.product_sites.{$site}.name"), $paths->count(), $problems);
+    }
+
     private function checkCategories(): void
     {
         $rows = $this->db()->table('product_categories')->get();
@@ -224,7 +320,10 @@ class LegacyVerifier
     /**
      * Every safe file in the old upload folders must exist under public/uploads/legacy.
      */
-    private function checkUploadFolders(): void
+    /**
+     * @param  array<int, string>  $folders
+     */
+    private function checkUploadFolders(?string $prefix = null, array $folders = ['files', 'media']): void
     {
         if (blank($this->webroot) || ! is_dir($this->webroot)) {
             $this->record('Tệp tải lên (files/, media/)', 0, ['Không tìm thấy thư mục webroot cũ (LEGACY_WEBROOT) — chưa kiểm tra được tệp.']);
@@ -233,12 +332,12 @@ class LegacyVerifier
         }
 
         $disk = Storage::disk('public');
-        $prefix = config('legacy.uploads_prefix');
+        $prefix ??= config('legacy.uploads_prefix');
         $problems = [];
         $skipped = [];
         $checked = 0;
 
-        foreach (['files', 'media'] as $folder) {
+        foreach ($folders as $folder) {
             $source = $this->webroot.'/'.$folder;
 
             if (! is_dir($source)) {

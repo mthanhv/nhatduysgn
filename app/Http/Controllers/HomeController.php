@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Brand;
-use App\Models\Post;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Service;
@@ -24,7 +23,6 @@ class HomeController extends Controller
             'featuredProducts' => Product::query()->published()->where('is_featured', true)->with('brand')->ordered()->limit(4)->get(),
             'services' => Service::query()->published()->ordered()->limit(4)->get(),
             'brands' => Brand::query()->published()->orderByDesc('is_featured')->ordered()->limit(12)->get(),
-            'posts' => Post::query()->published()->limit(3)->get(),
         ]);
     }
 }

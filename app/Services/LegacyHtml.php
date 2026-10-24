@@ -30,7 +30,20 @@ class LegacyHtml
     public function __construct(
         private string $uploadsUrlPrefix = '/uploads/legacy',
         private array $siteHosts = ['nhatduysgn.com', 'www.nhatduysgn.com'],
+        private ?string $webroot = null,
     ) {}
+
+    /**
+     * Same cleaner, but upload links are matched against the old webroot so a link whose letter case differs
+     * from the real file (e.g. ".png" for "x.PNG", which only worked on case-insensitive disks) still resolves.
+     */
+    public function withWebroot(?string $webroot): self
+    {
+        $clone = clone $this;
+        $clone->webroot = $webroot;
+
+        return $clone;
+    }
 
     public function clean(?string $html): ?string
     {
@@ -110,7 +123,9 @@ class LegacyHtml
         $path = '/'.ltrim($parts['path'] ?? '', '/');
 
         if (preg_match('#^/(?:app/webroot/)?(files|media)/(.+)$#i', $path, $matches)) {
-            return $this->uploadsUrlPrefix.'/'.strtolower($matches[1]).'/'.$matches[2];
+            $folder = strtolower($matches[1]);
+
+            return $this->uploadsUrlPrefix.'/'.$folder.'/'.$this->matchFileCase($folder, $matches[2]);
         }
 
         if ($host !== '') {
@@ -119,6 +134,32 @@ class LegacyHtml
         }
 
         return $url;
+    }
+
+    private function matchFileCase(string $folder, string $relative): string
+    {
+        if (blank($this->webroot)) {
+            return $relative;
+        }
+
+        $decoded = rawurldecode($relative);
+        $path = rtrim($this->webroot, '/').'/'.$folder.'/'.$decoded;
+
+        if (file_exists($path) || ! is_dir(dirname($path))) {
+            return $relative;
+        }
+
+        $wanted = mb_strtolower(basename($decoded));
+
+        foreach (scandir(dirname($path)) ?: [] as $entry) {
+            if (mb_strtolower($entry) === $wanted) {
+                $directory = str_contains($relative, '/') ? substr($relative, 0, strrpos($relative, '/') + 1) : '';
+
+                return $directory.(str_contains($relative, '%') ? rawurlencode($entry) : $entry);
+            }
+        }
+
+        return $relative;
     }
 
     private function cleanAttributes(DOMElement $element): void

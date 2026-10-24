@@ -1,1 +1,0 @@
-[2026-10-23 20:02] Documented in the README go-live rule that the full legacy:import applies the config/catalog.php group mapping in production and that local-only admin edits must be re-entered.

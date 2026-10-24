@@ -24,16 +24,6 @@
         </div>
     </section>
 
-    @if ($stats = setting('home_stats'))
-        <section class="stats" aria-label="Số liệu nổi bật">
-            <div class="container">
-                @foreach ($stats as $stat)
-                    <div class="stat"><strong>{{ $stat['value'] }}</strong><span>{{ $stat['label'] }}</span></div>
-                @endforeach
-            </div>
-        </section>
-    @endif
-
     <section class="section">
         <div class="container split">
             <div class="split-text">
@@ -118,7 +108,7 @@
     @endif
 
     @if ($brands->isNotEmpty())
-        <section class="section">
+        <section class="section" style="padding-bottom:72px">
             <div class="container">
                 <div class="section-head"><h2>Thương hiệu đại diện &amp; phân phối</h2></div>
                 <div class="grid grid-brands">
@@ -129,41 +119,6 @@
                             @else
                                 {{ $brand->name }}
                             @endif
-                        </a>
-                    @endforeach
-                </div>
-            </div>
-        </section>
-    @endif
-
-    @if ($industries = setting('industries'))
-        <section class="section section--tight">
-            <div class="container">
-                <div class="section-head"><h2>Ngành công nghiệp phục vụ</h2></div>
-                <div class="grid grid-brands">
-                    @foreach ($industries as $industry)
-                        <div class="card industry"><span class="dot"></span>{{ $industry['name'] }}</div>
-                    @endforeach
-                </div>
-            </div>
-        </section>
-    @endif
-
-    @if ($posts->isNotEmpty())
-        <section class="section" style="padding-bottom:72px">
-            <div class="container">
-                <div class="section-head">
-                    <h2>Tin tức</h2>
-                    <a class="link-more" href="{{ route('posts.index') }}">Tất cả bài viết →</a>
-                </div>
-                <div class="grid grid-320">
-                    @foreach ($posts as $post)
-                        <a class="card post-card" href="{{ route('posts.show', $post) }}">
-                            <span class="cover">@if ($post->cover)<img src="{{ media_url($post->cover) }}" alt="" loading="lazy">@endif</span>
-                            <span class="body">
-                                <span class="meta">{{ $post->published_at?->format('d/m/Y') }}</span>
-                                <h3>{{ $post->title }}</h3>
-                            </span>
                         </a>
                     @endforeach
                 </div>

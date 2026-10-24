@@ -9,7 +9,8 @@ use Illuminate\Console\Command;
 
 #[Signature('legacy:verify
     {--urls= : Text file with real old URLs (one per line, e.g. extracted from the old server access log)}
-    {--limit=20 : How many problems to print per check}')]
+    {--limit=20 : How many problems to print per check}
+    {--site= : Reconcile another old site imported for its products only (config legacy.product_sites, e.g. tbn)}')]
 #[Description('Reconcile the old site with the new one: records, files, content links and old URLs. Exits non-zero if anything is missing.')]
 class VerifyLegacyImport extends Command
 {
@@ -41,7 +42,15 @@ class VerifyLegacyImport extends Command
         }
 
         $this->info('Đang đối chiếu website cũ với website mới…');
-        $results = $verifier->run($urls);
+        $site = $this->option('site');
+
+        if ($site && ! config("legacy.product_sites.{$site}")) {
+            $this->error("Unknown site [{$site}]. Valid: ".implode(', ', array_keys(config('legacy.product_sites', []))));
+
+            return self::FAILURE;
+        }
+
+        $results = $site ? $verifier->runSite($site) : $verifier->run($urls);
         $limit = (int) $this->option('limit');
         $failed = 0;
 
@@ -71,7 +80,7 @@ class VerifyLegacyImport extends Command
 
         $this->newLine();
         $this->line('<options=bold>Không chuyển có chủ đích:</>');
-        foreach (self::NOT_MIGRATED as $table => $reason) {
+        foreach ($site ? ['all except products' => 'Website '.config("legacy.product_sites.{$site}.name").' chỉ được chuyển phần sản phẩm (kèm thương hiệu, ảnh, tài liệu, từ khóa).'] : self::NOT_MIGRATED as $table => $reason) {
             $this->line("  - {$table}: {$reason}");
         }
 

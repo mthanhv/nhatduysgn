@@ -13,7 +13,7 @@ class LegacyRedirectController extends Controller
 {
     public function __invoke(Request $request, LegacyUrlResolver $resolver): RedirectResponse
     {
-        $target = $resolver->resolve($request->path(), $request->query());
+        $target = $resolver->resolve($request->path(), $request->query(), $request->getHost());
 
         abort_if($target === null, 404);
 

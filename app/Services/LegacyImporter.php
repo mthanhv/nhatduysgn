@@ -12,6 +12,7 @@ use App\Models\Redirect;
 use Closure;
 use FilesystemIterator;
 use Illuminate\Database\ConnectionInterface;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -32,24 +33,34 @@ class LegacyImporter
     public const STEPS = ['files', 'categories', 'brands', 'products', 'catalog', 'posts', 'clients', 'contacts', 'tags'];
 
     /** @var array<int, int> */
-    private array $categoryMap = [];
+    protected array $categoryMap = [];
 
     /** @var array<string, int> */
-    private array $brandMap = [];
+    protected array $brandMap = [];
 
     private ?Closure $output = null;
 
     /** @var array<int, string>|null */
     private ?array $productTags = null;
 
+    /** Folder on the uploads disk that receives the old /files and /media trees. */
+    protected string $uploadsPrefix;
+
     public function __construct(
-        private LegacyHtml $html,
-        private CatalogRestructurer $catalog,
-        private string $connection = 'legacy',
-        private ?string $webroot = null,
-        private bool $skipExisting = false,
+        protected LegacyHtml $html,
+        protected CatalogRestructurer $catalog,
+        protected string $connection = 'legacy',
+        protected ?string $webroot = null,
+        protected bool $skipExisting = false,
     ) {
         $this->webroot ??= config('legacy.webroot');
+        $this->html = $this->html->withWebroot($this->webroot);
+        $this->uploadsPrefix = config('legacy.uploads_prefix');
+    }
+
+    public function connectionName(): string
+    {
+        return $this->connection;
     }
 
     public function skipExisting(bool $skip = true): self
@@ -74,7 +85,7 @@ class LegacyImporter
     {
         $results = [];
 
-        foreach (self::STEPS as $step) {
+        foreach (static::STEPS as $step) {
             if (! in_array($step, $steps, true)) {
                 continue;
             }
@@ -96,9 +107,9 @@ class LegacyImporter
 
         $copied = 0;
         $disk = Storage::disk('public');
-        $prefix = config('legacy.uploads_prefix');
+        $prefix = $this->uploadsPrefix;
 
-        foreach (['files', 'media'] as $folder) {
+        foreach ($this->uploadFolders() as $folder) {
             $source = rtrim($this->webroot, '/').'/'.$folder;
 
             if (! is_dir($source)) {
@@ -180,10 +191,10 @@ class LegacyImporter
         $featured = config('legacy.featured_brands', []);
 
         foreach (['brands' => 'brand', 'suppliers' => 'supplier'] as $table => $type) {
-            foreach ($this->db()->table($table)->orderBy('id')->get() as $row) {
+            foreach ($this->brandRows($table)->orderBy('id')->get() as $row) {
                 $name = $this->brandName($row->title);
                 $brand = Brand::query()->whereRaw('UPPER(name) = ?', [mb_strtoupper($name)])->first() ?? new Brand(['name' => $name]);
-                $keys = collect($brand->legacy_keys ?? [])->push("{$type}:{$row->id}")->unique()->values()->all();
+                $keys = collect($brand->legacy_keys ?? [])->push($this->brandKey($type, $row->id))->unique()->values()->all();
                 $logo = $type === 'supplier' ? $this->legacyFile('suppliers', $row->image ?? null) : null;
 
                 if ($brand->exists && $this->skipExisting) {
@@ -197,7 +208,7 @@ class LegacyImporter
                     ])->save();
                 }
 
-                $this->brandMap["{$type}:{$row->id}"] = $brand->id;
+                $this->brandMap[$this->brandKey($type, $row->id)] = $brand->id;
                 $count++;
             }
         }
@@ -218,31 +229,12 @@ class LegacyImporter
                     continue;
                 }
 
-                $attachment = $this->legacyFile('products/attachments', $row->attachment ?? null);
-                $keywords = $this->productTags()[$row->id] ?? null;
-
-                Product::withoutTimestamps(function () use ($row, $existing, $attachment, $keywords): void {
+                Product::withoutTimestamps(function () use ($row, $existing): void {
                     $product = $existing ?? new Product(['legacy_id' => $row->id]);
-                    $product->fill([
-                        'name' => $this->cleanTitle($row->title),
-                        'code' => $this->nullableTrim($row->code),
-                        'origin' => $this->nullableTrim($row->origin),
-                        'description' => $this->html->clean($row->content),
-                        'specifications' => $this->html->clean($row->specification),
-                        'keywords' => $keywords,
-                        'image' => $this->legacyFile('products', $row->image),
-                        'documents' => $attachment ? [['title' => $row->attachment, 'file' => $attachment]] : null,
+                    $product->fill($this->productAttributes($row) + [
                         'product_category_id' => $this->categoryMap[$row->product_category_id] ?? null,
-                        'brand_id' => $this->brandMap["brand:{$row->brand_id}"] ?? $this->brandMap["supplier:{$row->supplier_id}"] ?? null,
-                        'is_featured' => (bool) $row->featured,
-                        'is_published' => (bool) $row->publish,
-                        'sort_order' => (int) $row->ordering,
-                        'meta_description' => $this->nullableTrim($row->meta_description),
                     ]);
-                    $product->view_count = (int) $row->view_count;
-                    $product->created_at = $this->date($row->created) ?? now();
-                    $product->updated_at = $this->date($row->updated) ?? $product->created_at;
-                    $product->save();
+                    $this->stampFromLegacy($product, $row)->save();
                 });
 
                 $count++;
@@ -252,6 +244,70 @@ class LegacyImporter
         $this->summarizeCategories();
 
         return $count;
+    }
+
+    /**
+     * Product fields taken from an old products row (everything except its group).
+     *
+     * @return array<string, mixed>
+     */
+    protected function productAttributes(object $row): array
+    {
+        $attachment = $this->legacyFile('products/attachments', $row->attachment ?? null);
+
+        return [
+            'name' => $this->cleanTitle($row->title),
+            'code' => $this->nullableTrim($row->code),
+            'origin' => $this->nullableTrim($row->origin),
+            'description' => $this->html->clean($row->content),
+            'specifications' => $this->html->clean($row->specification),
+            'keywords' => $this->productTags()[$row->id] ?? null,
+            'image' => $this->legacyFile('products', $row->image),
+            'documents' => $attachment ? [['title' => $row->attachment, 'file' => $attachment]] : null,
+            'brand_id' => $this->brandMap[$this->brandKey('brand', (int) $row->brand_id)] ?? $this->brandMap[$this->brandKey('supplier', (int) $row->supplier_id)] ?? null,
+            'is_featured' => (bool) $row->featured,
+            'is_published' => (bool) $row->publish,
+            'sort_order' => (int) $row->ordering,
+            'meta_description' => $this->nullableTrim($row->meta_description),
+        ];
+    }
+
+    /**
+     * Keeps the old view count and dates.
+     */
+    protected function stampFromLegacy(Product $product, object $row): Product
+    {
+        $product->view_count = (int) $row->view_count;
+        $product->created_at = $this->date($row->created) ?? now();
+        $product->updated_at = $this->date($row->updated) ?? $product->created_at;
+
+        return $product;
+    }
+
+    /**
+     * Old upload folders copied by the files step, relative to the webroot.
+     *
+     * @return array<int, string>
+     */
+    public function uploadFolders(): array
+    {
+        return ['files', 'media'];
+    }
+
+    /**
+     * Old brands or suppliers rows to import ($table is "brands" or "suppliers").
+     */
+    protected function brandRows(string $table): Builder
+    {
+        return $this->db()->table($table);
+    }
+
+    /**
+     * Key of an old brand/supplier row in Brand::legacy_keys, e.g. "brand:19".
+     */
+    protected function brandKey(string $type, int $id): string
+    {
+        return "{$type}:{$id}";
     }
 
     /**
@@ -386,7 +442,7 @@ class LegacyImporter
     /**
      * Fills empty category summaries with the main brands of their products, e.g. "ITH · Schaeffler".
      */
-    private function summarizeCategories(): void
+    protected function summarizeCategories(): void
     {
         ProductCategory::query()->whereNull('summary')->each(function (ProductCategory $category): void {
             $brands = Product::query()
@@ -411,7 +467,7 @@ class LegacyImporter
      *
      * @return array<int, string>
      */
-    private function productTags(): array
+    protected function productTags(): array
     {
         return $this->productTags ??= $this->db()->table('products_tags')
             ->join('tags', 'tags.id', '=', 'products_tags.tag_id')
@@ -422,7 +478,7 @@ class LegacyImporter
             ->all();
     }
 
-    private function ensureMaps(): void
+    protected function ensureMaps(): void
     {
         if ($this->categoryMap === []) {
             $this->categoryMap = ProductCategory::legacyMap();
@@ -489,7 +545,7 @@ class LegacyImporter
         return true;
     }
 
-    private function legacyFile(string $folder, ?string $filename): ?string
+    protected function legacyFile(string $folder, ?string $filename): ?string
     {
         $filename = $this->nullableTrim($filename);
 
@@ -497,12 +553,12 @@ class LegacyImporter
             return null;
         }
 
-        $path = config('legacy.uploads_prefix').'/files/'.$folder.'/'.$filename;
+        $path = $this->uploadsPrefix.'/files/'.$folder.'/'.$filename;
 
         return Storage::disk('public')->exists($path) ? $path : null;
     }
 
-    private function brandName(?string $title): string
+    protected function brandName(?string $title): string
     {
         $name = Str::of((string) $title)->replace(["\t", "\u{00A0}"], ' ')->squish()->replaceMatches('/\s+BRAND$/i', '')->trim(' -')->toString();
         $aliases = config('legacy.brand_aliases', []);
@@ -510,7 +566,7 @@ class LegacyImporter
         return $aliases[mb_strtoupper($name)] ?? $name;
     }
 
-    private function cleanTitle(?string $title): string
+    protected function cleanTitle(?string $title): string
     {
         return Str::of(html_entity_decode((string) $title, ENT_QUOTES | ENT_HTML5, 'UTF-8'))
             ->replace(["\t", "\u{00A0}"], ' ')
@@ -520,14 +576,14 @@ class LegacyImporter
             ->toString() ?: 'Không tên';
     }
 
-    private function nullableTrim(?string $value): ?string
+    protected function nullableTrim(?string $value): ?string
     {
         $value = trim(html_entity_decode((string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
 
         return $value === '' ? null : $value;
     }
 
-    private function date(?string $value): ?Carbon
+    protected function date(?string $value): ?Carbon
     {
         if (blank($value) || str_starts_with($value, '0000')) {
             return null;
@@ -536,12 +592,12 @@ class LegacyImporter
         return Carbon::parse($value);
     }
 
-    private function db(): ConnectionInterface
+    protected function db(): ConnectionInterface
     {
         return DB::connection($this->connection);
     }
 
-    private function say(string $message): void
+    protected function say(string $message): void
     {
         if ($this->output) {
             ($this->output)($message);

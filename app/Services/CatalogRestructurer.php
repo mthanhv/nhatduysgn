@@ -97,6 +97,25 @@ class CatalogRestructurer
     }
 
     /**
+     * Category IDs of other old sites listed on a node, as "site:id" (e.g. "tbn:68").
+     *
+     * @param  array<string, mixed>  $node
+     * @return array<int, string>
+     */
+    private static function siteIds(array $node): array
+    {
+        $ids = [];
+
+        foreach (array_keys(config('legacy.product_sites', [])) as $site) {
+            foreach ($node[$site] ?? [] as $id) {
+                $ids[] = "{$site}:{$id}";
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
      * @param  array<int, array<string, mixed>>  $nodes
      * @return array<int, array<string, mixed>>
      */
@@ -148,7 +167,7 @@ class CatalogRestructurer
         }
 
         $group->parent_id = $parentId;
-        $group->legacy_ids = collect($group->legacy_ids ?? [])->merge($legacyIds)->map(fn ($id) => (string) $id)->unique()->values()->all() ?: null;
+        $group->legacy_ids = collect($group->legacy_ids ?? [])->merge($legacyIds)->merge(self::siteIds($node))->map(fn ($id) => (string) $id)->unique()->values()->all() ?: null;
         $group->save();
         $this->managedIds[] = $group->id;
         $this->appliedKeys[] = $node['key'];
