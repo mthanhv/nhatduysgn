@@ -103,4 +103,18 @@ class CatalogRestructurerTest extends TestCase
         $this->assertSame(3, ProductCategory::count());
         $this->assertModelExists($this->oldParent);
     }
+
+    public function test_a_standard_group_removed_from_the_config_redirects_to_the_group_that_absorbed_it(): void
+    {
+        $this->artisan('catalog:restructure')->assertSuccessful();
+        $hydraulic = ProductCategory::where('slug', 'dau-xiet-thuy-luc')->sole();
+        $product = Product::factory()->create(['product_category_id' => $hydraulic->id]);
+
+        config(['catalog.0.legacy' => [85, 114, 117], 'catalog.0.children' => [['key' => 'sung-xiet-bu-long', 'name' => 'Súng xiết bu lông', 'products' => [703]]]]);
+        $this->artisan('catalog:restructure')->assertSuccessful();
+
+        $this->assertModelMissing($hydraulic);
+        $this->assertSame('dung-cu-xiet-bu-long', $product->fresh()->category->slug);
+        $this->get('/danh-muc/dau-xiet-thuy-luc')->assertStatus(301)->assertRedirect(route('products.category', 'dung-cu-xiet-bu-long'));
+    }
 }

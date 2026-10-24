@@ -80,6 +80,20 @@ class ProductCategory extends Model
     }
 
     /**
+     * The group's own image, or a photo of one of its products (featured first) until an editor uploads one.
+     */
+    public function coverImage(): ?string
+    {
+        return $this->image ?: Product::query()
+            ->published()
+            ->whereIn('product_category_id', $this->descendantAndSelfIds())
+            ->whereNotNull('image')
+            ->orderByDesc('is_featured')
+            ->ordered()
+            ->value('image');
+    }
+
+    /**
      * IDs of this category and every descendant, so a parent listing includes products of its sub-groups.
      *
      * @return Collection<int, int>

@@ -5,7 +5,7 @@
 
 @section('content')
     <section class="page-hero page-hero--photo">
-        <img src="{{ media_url(setting('about_hero_image'), asset('images/about-hero.jpg')) }}" alt="">
+        <img src="{{ thumb_url(setting('about_hero_image'), 1600, asset('images/about-hero.jpg')) }}" alt="">
         <div class="container">
             <x-breadcrumb :items="['Giới thiệu' => null]" />
             <div style="display:flex;flex-direction:column;gap:18px;max-width:680px">
@@ -55,7 +55,7 @@
             <div class="container">
                 <div class="spotlight">
                     <div class="logo-side">
-                        <img src="{{ media_url(setting('about_spotlight_image'), asset('images/jbe-logo.jpg')) }}" alt="Logo đối tác">
+                        <img src="{{ thumb_url(setting('about_spotlight_image'), 640, asset('images/jbe-logo.jpg')) }}" alt="Logo đối tác">
                         <span>{{ setting('about_spotlight_country') }}</span>
                     </div>
                     <div class="text-side">
@@ -82,7 +82,7 @@
                 <div class="logo-wall">
                     @foreach ($brands as $brand)
                         <a href="{{ route('products.brand', $brand) }}">
-                            @if ($brand->logo)<img src="{{ media_url($brand->logo) }}" alt="{{ $brand->name }}" loading="lazy">@else{{ $brand->name }}@endif
+                            @if ($brand->logo)<img src="{{ thumb_url($brand->logo, 320) }}" alt="{{ $brand->name }}" loading="lazy">@else{{ $brand->name }}@endif
                         </a>
                     @endforeach
                 </div>
@@ -101,7 +101,7 @@
                 </div>
                 <div class="logo-wall">
                     @foreach ($clients as $client)
-                        <span>@if ($client->logo)<img src="{{ media_url($client->logo) }}" alt="{{ $client->name }}" loading="lazy">@else{{ $client->name }}@endif</span>
+                        <span>@if ($client->logo)<img src="{{ thumb_url($client->logo, 320) }}" alt="{{ $client->name }}" loading="lazy">@else{{ $client->name }}@endif</span>
                     @endforeach
                 </div>
             </div>
@@ -155,7 +155,7 @@
                 <div class="grid grid-250">
                     @foreach ($certificates as $certificate)
                         <a class="cert" href="{{ media_url($certificate->file ?: $certificate->image) }}" target="_blank" rel="noopener">
-                            <span class="paper">@if ($certificate->image)<img src="{{ media_url($certificate->image) }}" alt="" loading="lazy">@endif</span>
+                            <span class="paper">@if ($certificate->image)<img src="{{ thumb_url($certificate->image, 640) }}" alt="" loading="lazy">@endif</span>
                             <strong>{{ $certificate->title }}</strong>
                         </a>
                     @endforeach

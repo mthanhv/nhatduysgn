@@ -107,12 +107,17 @@ class ProductController extends Controller
      */
     private function categoryTree(): Collection
     {
+        $published = fn ($query) => $query->published();
+
+        // total_products: the group's own products plus those filed under its sub-groups.
         return ProductCategory::query()
             ->published()
             ->whereNull('parent_id')
-            ->with(['children' => fn ($query) => $query->published()->ordered()])
+            ->withCount(['products' => $published])
+            ->with(['children' => fn ($query) => $query->published()->ordered()->withCount(['products' => $published])])
             ->ordered()
-            ->get();
+            ->get()
+            ->each(fn (ProductCategory $root) => $root->setAttribute('total_products', $root->products_count + $root->children->sum('products_count')));
     }
 
     /**

@@ -11,3 +11,4 @@
         @endif
     @endforeach
 </nav>
+<x-json-ld :data="\App\Services\Seo::breadcrumbs($items)" />

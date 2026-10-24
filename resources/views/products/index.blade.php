@@ -25,8 +25,8 @@
                     @foreach ($featured as $category)
                         <a class="card product-card" href="{{ route('products.category', $category) }}">
                             <span class="thumb">
-                                @if ($category->image)
-                                    <img src="{{ media_url($category->image) }}" alt="" loading="lazy">
+                                @if ($cover = $category->coverImage())
+                                    <img src="{{ thumb_url($cover, 640) }}" alt="{{ $category->name }}" loading="lazy">
                                 @else
                                     <span class="icon-tile" style="width:72px;height:72px"><x-ui-icon :name="$category->icon ?: 'box'" :size="36" :stroke="1.6" /></span>
                                 @endif
@@ -71,7 +71,7 @@
                 <div class="grid grid-brands">
                     @foreach ($brands as $brand)
                         <a class="card brand-tile" href="{{ route('products.brand', $brand) }}">
-                            @if ($brand->logo)<img src="{{ media_url($brand->logo) }}" alt="{{ $brand->name }}" loading="lazy">@else{{ $brand->name }}@endif
+                            @if ($brand->logo)<img src="{{ thumb_url($brand->logo, 320) }}" alt="{{ $brand->name }}" loading="lazy">@else{{ $brand->name }}@endif
                         </a>
                     @endforeach
                 </div>

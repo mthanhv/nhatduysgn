@@ -1,9 +1,24 @@
 @extends('layouts.site')
 
 @section('title', $title)
-@isset($category)
-    @section('description', $category->meta_description ?: ($category->summary ?: strip_tags((string) $category->description)))
+@php
+    $listingDescription = match (true) {
+        isset($category) => \App\Services\Seo::categoryDescription($category),
+        isset($brand) => \App\Services\Seo::brandDescription($brand),
+        default => 'Kết quả tìm kiếm sản phẩm tại '.setting('company_name').'.',
+    };
+@endphp
+@section('description', $listingDescription)
+@isset($term)
+    {{-- Search results are not indexed (endless thin pages); links on them are still followed. --}}
+    @section('robots', 'noindex, follow')
 @endisset
+
+@push('head')
+    @unless (isset($term))
+        <x-json-ld :data="\App\Services\Seo::productList($title, $listingDescription, $products)" />
+    @endunless
+@endpush
 
 @section('content')
     @php
@@ -37,30 +52,47 @@
                 </div>
             </div>
             @if ((isset($category) && $category->image) || (isset($brand) && $brand->logo))
-                <div class="media"><img src="{{ media_url($category->image ?? $brand->logo) }}" alt=""></div>
+                <div class="media"><img src="{{ thumb_url($category->image ?? $brand->logo, 640) }}" alt=""></div>
             @endif
         </div>
     </section>
 
     <div class="container catalog-layout">
         <aside aria-label="Danh mục sản phẩm">
-            <nav class="card tree">
-                <h2>Danh mục sản phẩm</h2>
-                <ul>
-                    @foreach ($tree as $root)
-                        <li>
-                            <a href="{{ route('products.category', $root) }}" @class(['is-active' => $currentCategory?->id === $root->id]) @if ($currentCategory?->id === $root->id) aria-current="page" @endif>{{ $root->name }}</a>
-                            @if ($activeRootId === $root->id && $root->children->isNotEmpty())
-                                <ul>
-                                    @foreach ($root->children as $child)
-                                        <li><a href="{{ route('products.category', $child) }}" @class(['is-active' => $currentCategory?->id === $child->id]) @if ($currentCategory?->id === $child->id) aria-current="page" @endif>{{ $child->name }}</a></li>
-                                    @endforeach
-                                </ul>
-                            @endif
-                        </li>
-                    @endforeach
-                </ul>
-            </nav>
+            {{-- Open by default (works without JS); site.js folds it on phones so products come first. --}}
+            <details class="card tree" data-tree open>
+                <summary class="tree__head">
+                    <span class="tree__title"><x-ui-icon name="box" :size="18" :stroke="1.9" /> Danh mục sản phẩm</span>
+                    <x-ui-icon name="chevron-right" :size="18" class="tree__toggle" />
+                </summary>
+                <nav aria-label="Nhóm sản phẩm">
+                    <ul class="tree__list">
+                        @foreach ($tree as $root)
+                            @php $isOpen = $activeRootId === $root->id; @endphp
+                            <li @class(['tree__item', 'is-open' => $isOpen])>
+                                <a href="{{ route('products.category', $root) }}" @class(['tree__link', 'is-active' => $currentCategory?->id === $root->id]) @if ($currentCategory?->id === $root->id) aria-current="page" @endif>
+                                    <span class="tree__icon"><x-ui-icon :name="$root->icon ?: 'box'" :size="18" :stroke="1.8" /></span>
+                                    <span class="tree__name">{{ $root->name }}</span>
+                                    <span class="tree__count">{{ $root->total_products }}</span>
+                                </a>
+                                @if ($isOpen && $root->children->isNotEmpty())
+                                    <ul class="tree__sub">
+                                        @foreach ($root->children as $child)
+                                            <li>
+                                                <a href="{{ route('products.category', $child) }}" @class(['tree__sublink', 'is-active' => $currentCategory?->id === $child->id]) @if ($currentCategory?->id === $child->id) aria-current="page" @endif>
+                                                    <span class="tree__name">{{ $child->name }}</span>
+                                                    <span class="tree__count">{{ $child->products_count }}</span>
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                    <a class="tree__all" href="{{ route('products.index') }}">Xem tất cả nhóm sản phẩm <x-ui-icon name="arrow-right" :size="15" /></a>
+                </nav>
+            </details>
             <div class="card" style="padding:20px;display:flex;flex-direction:column;gap:10px">
                 <span class="icon-tile"><x-ui-icon name="phone" :size="22" :stroke="1.9" /></span>
                 <strong style="font-size:16px">Cần tư vấn chọn thiết bị?</strong>

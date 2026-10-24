@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Posts\Schemas;
 
 use App\Filament\Support\Uploads;
+use App\Services\Seo;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Textarea;
@@ -35,7 +36,7 @@ class PostForm
                     ]),
                     Section::make('SEO')->collapsible()->collapsed()->schema([
                         TextInput::make('meta_title')->label('Tiêu đề SEO')->maxLength(255),
-                        Textarea::make('meta_description')->label('Mô tả SEO')->rows(3)->maxLength(500),
+                        Textarea::make('meta_description')->label('Mô tả SEO')->rows(3)->maxLength(500)->placeholder(fn ($record) => $record ? Seo::postDescription($record, generated: true) : null)->helperText('Để trống: hệ thống tự viết mô tả như nội dung mờ trong ô (khoảng 155 ký tự).'),
                     ]),
                 ]),
             ]);

@@ -48,12 +48,17 @@ class ServiceSeeder extends Seeder
         foreach ($services as $index => $service) {
             $image = $service['image'] && Storage::disk('public')->exists($service['image']) ? $service['image'] : null;
 
-            Service::query()->firstOrCreate(['title' => $service['title']], [
+            $record = Service::query()->firstOrCreate(['title' => $service['title']], [
                 ...$service,
                 'image' => $image,
                 'sort_order' => $index + 1,
                 'is_published' => true,
             ]);
+
+            // Images come from the old uploads: re-running after `legacy:import` fills in the ones missing before.
+            if (blank($record->image) && $image) {
+                $record->update(['image' => $image]);
+            }
         }
     }
 }

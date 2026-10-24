@@ -1,21 +1,16 @@
 @extends('layouts.site')
 
 @section('title', $post->meta_title ?: $post->title)
-@section('description', $post->meta_description ?: ($post->excerpt ?: \Illuminate\Support\Str::limit(strip_tags((string) $post->content), 160)))
+@section('description', \App\Services\Seo::postDescription($post))
+@section('og_type', 'article')
 @if ($post->cover)
     @section('og_image', media_url($post->cover))
 @endif
 
 @push('head')
-    <script type="application/ld+json">{!! json_encode([
-        '@context' => 'https://schema.org',
-        '@type' => 'Article',
-        'headline' => $post->title,
-        'datePublished' => $post->published_at?->toAtomString(),
-        'dateModified' => $post->updated_at?->toAtomString(),
-        'image' => $post->cover ? media_url($post->cover) : null,
-        'publisher' => ['@type' => 'Organization', 'name' => setting('company_name')],
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
+    <meta property="article:published_time" content="{{ $post->published_at?->toAtomString() }}">
+    <meta property="article:modified_time" content="{{ $post->updated_at?->toAtomString() }}">
+    <x-json-ld :data="\App\Services\Seo::article($post)" />
 @endpush
 
 @section('content')
@@ -25,7 +20,7 @@
         @include('posts.partials.meta', ['post' => $post])
     </div>
     @if ($post->cover)
-        <div class="container"><figure class="article-cover" style="margin:0"><img src="{{ media_url($post->cover) }}" alt="{{ $post->title }}"></figure></div>
+        <div class="container"><figure class="article-cover" style="margin:0"><img src="{{ thumb_url($post->cover, 1280) }}" alt="{{ $post->title }}"></figure></div>
     @endif
     <div class="container article-layout">
         <article>

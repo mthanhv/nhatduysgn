@@ -1,6 +1,7 @@
 @extends('layouts.site')
 
 @section('title', 'Không tìm thấy trang')
+@section('robots', 'noindex, follow')
 
 @section('content')
     <div class="container error-page">

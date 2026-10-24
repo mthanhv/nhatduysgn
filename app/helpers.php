@@ -1,8 +1,19 @@
 <?php
 
 use App\Models\Setting;
+use App\Services\Thumbnailer;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+
+if (! function_exists('thumb_url')) {
+    /**
+     * Resized WebP version of an uploaded image (at least $width px wide); see App\Services\Thumbnailer.
+     */
+    function thumb_url(?string $path, int $width, ?string $fallback = null): ?string
+    {
+        return blank($path) ? $fallback : Thumbnailer::url($path, $width);
+    }
+}
 
 if (! function_exists('media_url')) {
     /**

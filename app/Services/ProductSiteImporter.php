@@ -123,7 +123,7 @@ class ProductSiteImporter extends LegacyImporter
      */
     private function ownProducts(): Collection
     {
-        return Product::query()->whereNotNull('legacy_id')->get(['id', 'name', 'code', 'legacy_key'])
+        return Product::query()->whereNotNull('legacy_id')->with('category.parent')->get(['id', 'name', 'code', 'legacy_key', 'product_category_id'])
             ->keyBy(fn (Product $product) => self::matchKey($product->code, $product->name));
     }
 
@@ -133,7 +133,21 @@ class ProductSiteImporter extends LegacyImporter
             $product->forceFill(['legacy_key' => $key])->saveQuietly();
         }
 
+        // This site's categories are finer (e.g. expanders for boilers vs heat exchangers): adopt its sub-group,
+        // but never move a product to a different top-level group.
+        $target = ProductCategory::findByLegacyId((int) $row->product_category_id, $this->site);
+        $current = $product->category;
+
+        if ($target && $current && $target->id !== $current->id && self::rootOf($target) === self::rootOf($current)) {
+            $product->forceFill(['product_category_id' => $target->id])->saveQuietly();
+        }
+
         $this->duplicates[] = ['old' => $key, 'existing' => $product->id, 'name' => $this->cleanTitle($row->title)];
+    }
+
+    private static function rootOf(ProductCategory $category): int
+    {
+        return $category->ancestors()->first()?->id ?? $category->id;
     }
 
     /**

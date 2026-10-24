@@ -254,22 +254,45 @@ class LegacyImporter
     protected function productAttributes(object $row): array
     {
         $attachment = $this->legacyFile('products/attachments', $row->attachment ?? null);
+        $brandId = $this->brandMap[$this->brandKey('brand', (int) $row->brand_id)] ?? $this->brandMap[$this->brandKey('supplier', (int) $row->supplier_id)] ?? null;
 
         return [
-            'name' => $this->cleanTitle($row->title),
-            'code' => $this->nullableTrim($row->code),
+            'name' => ProductTidier::name($this->cleanTitle($row->title)),
+            'code' => ProductTidier::code($row->code, $brandId ? Brand::query()->whereKey($brandId)->value('name') : null),
             'origin' => $this->nullableTrim($row->origin),
-            'description' => $this->html->clean($row->content),
-            'specifications' => $this->html->clean($row->specification),
-            'keywords' => $this->productTags()[$row->id] ?? null,
+            'description' => ProductTidier::description($this->html->clean($row->content), $attachment !== null),
+            'specifications' => ProductTidier::description($this->html->clean($row->specification), $attachment !== null),
+            ...$this->splitLegacyMeta($row->meta_description, $this->productTags()[$row->id] ?? null),
             'image' => $this->legacyFile('products', $row->image),
             'documents' => $attachment ? [['title' => $row->attachment, 'file' => $attachment]] : null,
-            'brand_id' => $this->brandMap[$this->brandKey('brand', (int) $row->brand_id)] ?? $this->brandMap[$this->brandKey('supplier', (int) $row->supplier_id)] ?? null,
+            'brand_id' => $brandId,
             'is_featured' => (bool) $row->featured,
             'is_published' => (bool) $row->publish,
             'sort_order' => (int) $row->ordering,
-            'meta_description' => $this->nullableTrim($row->meta_description),
         ];
+    }
+
+    /**
+     * Old meta descriptions were mostly keyword lists or fragments ("Lapping machine kemet 36"): their terms are
+     * added to the search keywords and the page gets a generated description. Real sentences stay SEO text.
+     *
+     * @return array{meta_description: ?string, keywords: ?string}
+     */
+    public static function splitLegacyMeta(?string $meta, ?string $keywords): array
+    {
+        $meta = Seo::text(str_replace(['\\n', '\\r'], ' ', (string) $meta), 1000);
+
+        if ($meta === '' || (! Seo::isKeywordList($meta) && mb_strlen($meta) >= 70)) {
+            return ['meta_description' => $meta !== '' ? $meta : null, 'keywords' => $keywords];
+        }
+
+        $terms = collect(explode(',', (string) $keywords))
+            ->merge(explode(',', $meta))
+            ->map(fn (string $term) => trim($term))
+            ->filter()
+            ->unique(fn (string $term) => mb_strtolower($term));
+
+        return ['meta_description' => null, 'keywords' => $terms->implode(', ') ?: null];
     }
 
     /**

@@ -85,6 +85,15 @@ class LegacyHtml
             }
         }
 
+        // The page already has its own <h1> (the product or article title); headings in old content move down a level.
+        foreach (iterator_to_array($xpath->query('.//h1', $root)) as $heading) {
+            $replacement = $document->createElement('h2');
+            while ($heading->firstChild) {
+                $replacement->appendChild($heading->firstChild);
+            }
+            $heading->parentNode?->replaceChild($replacement, $heading);
+        }
+
         foreach (iterator_to_array($xpath->query('.//*', $root)) as $element) {
             /** @var DOMElement $element */
             $this->cleanAttributes($element);

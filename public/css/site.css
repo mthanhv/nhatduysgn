@@ -307,12 +307,33 @@ input::placeholder, textarea::placeholder { color: var(--muted-2); opacity: 1; }
 .catalog-layout aside { flex: 1 1 260px; max-width: 100%; display: flex; flex-direction: column; gap: 20px; }
 .catalog-layout main { flex: 999 1 600px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
 .tree { overflow: hidden; }
-.tree h2 { padding: 16px 18px; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line-soft); }
-.tree ul { list-style: none; margin: 0; padding: 8px 0; font-size: 14px; }
-.tree ul ul { padding: 2px 0 6px; }
-.tree a { display: flex; justify-content: space-between; gap: 10px; padding: 9px 18px; color: #2e3b47; }
-.tree ul ul a { padding-left: 34px; }
-.tree a.is-active { font-weight: 700; color: var(--accent); background: var(--accent-tint); box-shadow: inset 3px 0 0 var(--accent); }
+.tree__head { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 16px 18px; border-bottom: 1px solid var(--line-soft); cursor: pointer; }
+.tree__head::-webkit-details-marker { display: none; }
+.tree__title { display: inline-flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--navy); }
+.tree__title svg { color: var(--accent); }
+.tree__toggle { color: var(--muted); transition: transform .2s; transform: rotate(90deg); }
+.tree:not([open]) .tree__toggle { transform: rotate(0deg); }
+.tree:not([open]) .tree__head { border-bottom: 0; }
+.tree__list { list-style: none; margin: 0; padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.tree__link { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 8px; color: #2e3b47; font-size: 14px; font-weight: 600; line-height: 1.35; transition: background .15s, color .15s; }
+.tree__link:hover { background: #f3f5f7; color: var(--navy); }
+.tree__icon { width: 32px; height: 32px; flex: none; border-radius: 7px; background: #eef1f4; color: var(--navy); display: inline-flex; align-items: center; justify-content: center; transition: background .15s, color .15s; }
+.tree__name { flex: 1; min-width: 0; }
+.tree__count { flex: none; min-width: 28px; padding: 2px 8px; border-radius: 999px; background: #f0f2f4; color: var(--muted); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; font-weight: 500; text-align: center; }
+.tree__item.is-open > .tree__link { background: var(--navy); color: #fff; }
+.tree__item.is-open > .tree__link .tree__icon { background: rgba(255, 255, 255, .12); color: #fff; }
+.tree__item.is-open > .tree__link .tree__count { background: rgba(255, 255, 255, .14); color: #fff; }
+.tree__link.is-active { box-shadow: inset 3px 0 0 var(--accent); }
+.tree__sub { list-style: none; margin: 6px 0 8px 26px; padding: 0 0 0 16px; border-left: 2px solid var(--line); display: flex; flex-direction: column; gap: 1px; }
+.tree__sublink { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px; font-size: 13.5px; color: #3a4754; line-height: 1.4; position: relative; }
+.tree__sublink::before { content: ""; position: absolute; left: -21px; top: 50%; width: 8px; height: 8px; margin-top: -4px; border-radius: 50%; background: #fff; border: 2px solid var(--line); }
+.tree__sublink:hover { background: #f3f5f7; color: var(--navy); }
+.tree__sublink.is-active { background: var(--accent-tint); color: var(--accent); font-weight: 700; }
+.tree__sublink.is-active::before { border-color: var(--accent); background: var(--accent); }
+.tree__sublink.is-active .tree__count { background: #fff; color: var(--accent); }
+.tree__all { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 4px 8px 12px; padding: 10px; border: 1px dashed var(--line); border-radius: 8px; font-size: 13px; font-weight: 700; color: var(--accent); }
+.tree__all:hover { border-color: var(--accent); background: var(--accent-tint); }
+@media (min-width: 961px) { .tree__head { cursor: default; } .tree__toggle { display: none; } }
 .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
 .toolbar h2 { font-size: 22px; font-weight: 800; }
 .empty { padding: 48px 24px; text-align: center; color: var(--muted); }
@@ -374,8 +395,8 @@ input::placeholder, textarea::placeholder { color: var(--muted-2); opacity: 1; }
 
 .article-head { padding-top: 36px; padding-bottom: 24px; display: flex; flex-direction: column; gap: 16px; }
 .article-head h1 { font-size: clamp(32px, 4.5vw, 46px); font-weight: 800; letter-spacing: -0.02em; max-width: 900px; }
-.article-cover { height: 480px; border-radius: 14px; overflow: hidden; }
-.article-cover img { width: 100%; height: 100%; object-fit: cover; }
+.article-cover { height: 480px; border-radius: 14px; overflow: hidden; background: #fff; border: 1px solid var(--line); padding: 32px; }
+.article-cover img { width: 100%; height: 100%; object-fit: contain; }
 .article-layout { display: flex; flex-wrap: wrap; gap: 48px; align-items: flex-start; padding-top: 40px; padding-bottom: 56px; }
 .article-layout article { flex: 999 1 600px; min-width: 0; max-width: 760px; }
 .article-layout aside { flex: 1 1 300px; min-width: 0; display: flex; flex-direction: column; gap: 20px; }
@@ -431,8 +452,10 @@ input::placeholder, textarea::placeholder { color: var(--muted-2); opacity: 1; }
 .news-hero__count span { font-size: 14px; color: var(--on-dark); }
 .news-featured-wrap { margin-top: -40px; position: relative; z-index: 2; }
 .news-featured { display: flex; flex-wrap: wrap; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow); }
-.news-featured__media { flex: 1.25 1 520px; min-height: 380px; position: relative; background: #dde3e8; overflow: hidden; }
-.news-featured__media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
+.news-featured__media { flex: 1.25 1 520px; min-height: 380px; position: relative; background: #fff; overflow: hidden; border-right: 1px solid var(--line); }
+/* News images are mostly product photos on white: show them whole, with breathing room, never cropped. */
+.news-featured__media img { position: absolute; inset: 32px; width: calc(100% - 64px); height: calc(100% - 64px); object-fit: contain; transition: transform .4s ease; }
+@media (max-width: 960px) { .news-featured__media { border-right: 0; border-bottom: 1px solid var(--line); min-height: 300px; } }
 .news-featured:hover .news-featured__media img, .news-card:hover .news-card__media img { transform: scale(1.03); }
 .news-featured__body { flex: 1 1 380px; padding: 40px; display: flex; flex-direction: column; justify-content: center; gap: 16px; }
 .news-featured__body h2 { font-size: clamp(24px, 2.6vw, 32px); font-weight: 800; line-height: 1.25; }
@@ -448,8 +471,8 @@ input::placeholder, textarea::placeholder { color: var(--muted-2); opacity: 1; }
 .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); gap: 20px; }
 .news-card { overflow: hidden; display: flex; flex-direction: column; transition: box-shadow .2s, transform .2s; }
 .news-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
-.news-card__media { height: 190px; background: #dde3e8; overflow: hidden; display: block; }
-.news-card__media img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
+.news-card__media { height: 200px; background: #fff; overflow: hidden; display: block; padding: 18px; border-bottom: 1px solid var(--line); }
+.news-card__media img { width: 100%; height: 100%; object-fit: contain; transition: transform .4s ease; }
 .news-card__placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #eef1f4, #dde3e8); opacity: .8; }
 .news-card__body { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
 .news-card h3 { font-size: 18px; font-weight: 800; line-height: 1.35; }

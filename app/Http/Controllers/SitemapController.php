@@ -2,22 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Brand;
 use App\Models\Post;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Project;
+use App\Models\Service;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Response;
 
+/**
+ * Machine-readable entry points: sitemap.xml for search engines, robots.txt, and llms.txt / llms-full.txt
+ * (the plain-text summary AI assistants and agents read instead of crawling HTML).
+ */
 class SitemapController extends Controller
 {
+    /**
+     * Crawlers of AI assistants and AI search, allowed explicitly so the company and its products can be cited.
+     */
+    private const AI_CRAWLERS = [
+        'GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-SearchBot', 'Claude-User', 'PerplexityBot',
+        'Perplexity-User', 'Google-Extended', 'Applebot-Extended', 'Bingbot', 'DuckAssistBot', 'meta-externalagent', 'CCBot',
+    ];
+
     public function sitemap(): Response
     {
         $content = view('sitemap', [
             'pages' => [route('home'), route('about'), route('services'), route('products.index'), route('projects.index'), route('posts.index'), route('contact')],
             'categories' => ProductCategory::query()->published()->get(['slug', 'updated_at']),
-            'products' => Product::query()->published()->get(['slug', 'updated_at']),
-            'projects' => Project::query()->published()->get(['slug', 'updated_at']),
-            'posts' => Post::query()->published()->get(['slug', 'updated_at']),
+            'brands' => Brand::query()->published()->whereHas('products', fn ($query) => $query->published())->get(['slug', 'updated_at']),
+            'products' => Product::query()->published()->get(['slug', 'name', 'image', 'updated_at']),
+            'projects' => Project::query()->published()->get(['slug', 'title', 'cover', 'updated_at']),
+            'posts' => Post::query()->published()->get(['slug', 'title', 'cover', 'updated_at']),
         ])->render();
 
         return response($content, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
@@ -25,10 +41,62 @@ class SitemapController extends Controller
 
     public function robots(): Response
     {
-        $lines = app()->isProduction()
-            ? ['User-agent: *', 'Disallow: /admin', 'Disallow: /lien-he?', '', 'Sitemap: '.route('sitemap')]
-            : ['User-agent: *', 'Disallow: /'];
+        if (! app()->isProduction()) {
+            return $this->text("User-agent: *\nDisallow: /\n");
+        }
 
-        return response(implode("\n", $lines)."\n", 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+        $rules = ['Allow: /', 'Disallow: /admin', 'Disallow: /livewire', 'Disallow: /*?q=', 'Disallow: /*&q='];
+        $lines = ['# Website '.setting('company_name').'. AI assistants: '.url('/llms.txt'), '', 'User-agent: *', ...$rules, ''];
+
+        foreach (self::AI_CRAWLERS as $agent) {
+            $lines[] = "User-agent: {$agent}";
+        }
+
+        array_push($lines, ...$rules);
+        $lines[] = '';
+        $lines[] = 'Sitemap: '.route('sitemap');
+
+        return $this->text(implode("\n", $lines)."\n");
+    }
+
+    /**
+     * Short Markdown guide to the company and the site (https://llmstxt.org).
+     */
+    public function llms(): Response
+    {
+        return $this->text(view('llms', [
+            'categories' => $this->categoryTree(),
+            'brands' => Brand::query()->published()->ordered()->get(),
+            'services' => Service::query()->published()->ordered()->get(),
+        ])->render(), 'text/markdown');
+    }
+
+    /**
+     * The full product catalogue as Markdown, so an assistant can answer "who sells X in Vietnam?" accurately.
+     */
+    public function llmsFull(): Response
+    {
+        return $this->text(view('llms-full', [
+            'categories' => $this->categoryTree(),
+            'products' => Product::query()->published()->with('brand')->ordered()->get()->groupBy('product_category_id'),
+        ])->render(), 'text/markdown');
+    }
+
+    /**
+     * @return Collection<int, ProductCategory>
+     */
+    private function categoryTree(): Collection
+    {
+        return ProductCategory::query()
+            ->published()
+            ->whereNull('parent_id')
+            ->with(['children' => fn ($query) => $query->published()->ordered()])
+            ->ordered()
+            ->get();
+    }
+
+    private function text(string $content, string $type = 'text/plain'): Response
+    {
+        return response($content, 200, ['Content-Type' => "{$type}; charset=UTF-8", 'X-Robots-Tag' => 'noindex']);
     }
 }

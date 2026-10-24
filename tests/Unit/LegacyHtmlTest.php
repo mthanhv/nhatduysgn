@@ -70,4 +70,9 @@ class LegacyHtmlTest extends TestCase
         rmdir($webroot.'/media');
         rmdir($webroot);
     }
+
+    public function test_headings_in_old_content_never_compete_with_the_page_h1(): void
+    {
+        $this->assertSame('<h2>Thông số</h2><p>CX-5</p>', $this->html->clean('<h1 style="color:red">Thông số</h1><p>CX-5</p>'));
+    }
 }

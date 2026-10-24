@@ -2,6 +2,9 @@
 
 @section('title', $term !== '' ? 'Tìm tin tức: '.$term : 'Tin tức')
 @section('description', 'Tin tức ngành công nghiệp, năng lượng và hoạt động của '.setting('company_name').'.')
+@if ($term !== '')
+    @section('robots', 'noindex, follow')
+@endif
 
 @section('content')
     <section class="page-hero page-hero--grid">
@@ -26,7 +29,7 @@
             <article class="news-featured">
                 <a class="news-featured__media" href="{{ route('posts.show', $featured) }}" tabindex="-1" aria-hidden="true">
                     @if ($featured->cover)
-                        <img src="{{ media_url($featured->cover) }}" alt="" fetchpriority="high">
+                        <img src="{{ thumb_url($featured->cover, 960) }}" alt="" fetchpriority="high">
                     @endif
                     <span class="news-badge">Mới nhất</span>
                 </a>
@@ -69,7 +72,7 @@
                         <article class="card news-card">
                             <a class="news-card__media" href="{{ route('posts.show', $post) }}" tabindex="-1" aria-hidden="true">
                                 @if ($post->cover)
-                                    <img src="{{ media_url($post->cover) }}" alt="" loading="lazy">
+                                    <img src="{{ thumb_url($post->cover, 640) }}" alt="" loading="lazy">
                                 @else
                                     <span class="news-card__placeholder"><x-logo :width="56" /></span>
                                 @endif

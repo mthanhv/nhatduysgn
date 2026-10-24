@@ -240,7 +240,7 @@ class LegacyVerifier
 
                 $expectedCategory = $overrides->get($row->id) ?? $categoryMap[$row->product_category_id] ?? null;
 
-                if ($expectedCategory && $product->product_category_id !== $expectedCategory) {
+                if ($expectedCategory && $product->product_category_id !== $expectedCategory && $product->category?->parent_id !== $expectedCategory) {
                     $problems[] = "{$label}: sai nhóm sản phẩm.";
                 }
 

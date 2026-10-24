@@ -82,10 +82,6 @@ return [
         ],
     ],
     [
-        'key' => 'thiet-bi-lo-hoi-trao-doi-nhiet', 'name' => 'Thiết bị lò hơi & trao đổi nhiệt', 'icon' => 'tube',
-        'legacy' => [94, 124, 128],
-    ],
-    [
         'key' => 'ra-van-seal-co-khi', 'name' => 'Rà van & seal cơ khí', 'icon' => 'valve',
         'legacy' => [100],
         'children' => [
@@ -123,9 +119,13 @@ return [
         'legacy' => [95, 144],
     ],
     [
+        // Also holds the old "Thiết bị lò hơi & trao đổi nhiệt" group (old IDs 94, 124, 128), merged 2026-10-24:
+        // its products are almost all JBE tube expanders. Those also sold on thietbinongong.com move into the
+        // matching sub-group when `legacy:import --site=tbn` runs.
         'key' => 'thiet-bi-nong-ong', 'name' => 'Thiết bị nong ống', 'icon' => 'tube',
+        'legacy' => [94, 124, 128],
         'children' => [
-            ['key' => 'dau-nong-ong-trao-doi-nhiet', 'name' => 'Đầu nong ống cho thiết bị trao đổi nhiệt', 'tbn' => [68, 78]],
+            ['key' => 'dau-nong-ong-trao-doi-nhiet', 'name' => 'Đầu nong ống cho thiết bị trao đổi nhiệt', 'tbn' => [68, 78], 'products' => [406, 586, 590]],
             ['key' => 'dau-nong-ong-lo-hoi', 'name' => 'Đầu nong ống cho lò hơi', 'tbn' => [79]],
             ['key' => 'dau-nong-ong-thuc-pham', 'name' => 'Đầu nong ống ngành thực phẩm', 'tbn' => [80]],
             ['key' => 'may-nong-ong', 'name' => 'Máy nong ống & bộ điều khiển', 'tbn' => [70, 91, 92, 93, 94, 96]],

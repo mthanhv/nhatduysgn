@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\Redirect;
 use App\Models\Setting;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,9 @@ class CatalogRestructurer
 
     /** @var array<int, string> */
     private array $appliedKeys = [];
+
+    /** @var array<int, string> group keys applied before this run */
+    private array $previouslyApplied = [];
 
     /** @var array<int, int> old category ID => group ID */
     private array $groupByLegacyId = [];
@@ -47,7 +51,7 @@ class CatalogRestructurer
         DB::beginTransaction();
 
         try {
-            $this->appliedKeys = Setting::query()->where('key', self::APPLIED_SETTING)->value('value') ?? [];
+            $this->appliedKeys = $this->previouslyApplied = Setting::query()->where('key', self::APPLIED_SETTING)->value('value') ?? [];
             $existing = ProductCategory::query()->get()->keyBy('id');
             $legacyMap = ProductCategory::legacyMap();
 
@@ -223,12 +227,34 @@ class CatalogRestructurer
             $merged = $ownIds->isNotEmpty() && $ownIds->every(fn (string $id) => $mapped->has($id));
 
             if ($merged && ! $category->products()->exists()) {
+                $this->redirectRemovedGroup($category, $ownIds->first());
                 ProductCategory::query()->where('parent_id', $category->id)->whereNotIn('id', $this->managedIds)->update(['parent_id' => null]);
                 $category->delete();
                 $this->report['deleted'][] = $category->name;
             } else {
                 $this->report['kept'][] = $category->name;
             }
+        }
+    }
+
+    /**
+     * A standard group removed from config/catalog.php was a public page: send its URL to the group that took
+     * over its old IDs. (Old site categories imported moments ago never had a page, so they get no redirect.)
+     */
+    private function redirectRemovedGroup(ProductCategory $category, string $firstLegacyId): void
+    {
+        if (! in_array($category->slug, $this->previouslyApplied, true)) {
+            return;
+        }
+
+        $target = ProductCategory::query()->whereIn('id', $this->managedIds)->get()
+            ->first(fn (ProductCategory $group) => in_array($firstLegacyId, array_map('strval', $group->legacy_ids ?? []), true));
+
+        if ($target) {
+            Redirect::query()->updateOrCreate(
+                ['from_path' => '/danh-muc/'.$category->slug],
+                ['to_url' => route('products.category', $target, false), 'status_code' => 301, 'is_active' => true, 'note' => "Nhóm “{$category->name}” đã gộp vào “{$target->name}”."],
+            );
         }
     }
 }

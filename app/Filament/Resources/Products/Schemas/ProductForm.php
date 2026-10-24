@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Products\Schemas;
 
 use App\Filament\Support\Uploads;
+use App\Services\Seo;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -111,7 +112,7 @@ class ProductForm
                         Tab::make('SEO')->schema([
                             Section::make()->schema([
                                 TextInput::make('meta_title')->label('Tiêu đề SEO')->maxLength(255)->helperText('Để trống sẽ dùng tên sản phẩm.'),
-                                Textarea::make('meta_description')->label('Mô tả SEO')->rows(3)->maxLength(500)->helperText('Khoảng 150–160 ký tự, hiển thị trên Google.'),
+                                Textarea::make('meta_description')->label('Mô tả SEO')->rows(3)->maxLength(500)->placeholder(fn ($record) => $record ? Seo::productDescription($record, generated: true) : null)->helperText('Để trống: hệ thống tự viết mô tả như nội dung mờ trong ô (khoảng 155 ký tự).'),
                                 TextInput::make('legacy_id')->label('ID trên website cũ')->disabled()->dehydrated(false)->visible(fn (?string $state) => filled($state)),
                             ]),
                         ]),

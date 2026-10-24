@@ -3,13 +3,17 @@
 @section('title', 'Dịch vụ kỹ thuật')
 @section('description', setting('services_intro'))
 
+@push('head')
+    <x-json-ld :data="\App\Services\Seo::services($services, setting('service_faqs') ?: [])" />
+@endpush
+
 @php
     $serviceIcons = ['wrench', 'valve', 'heat', 'ring', 'tube', 'pipe'];
 @endphp
 
 @section('content')
     <section class="page-hero page-hero--photo svc-hero">
-        <img src="{{ media_url(setting('services_hero_image'), asset('images/services-hero.jpg')) }}" alt="">
+        <img src="{{ thumb_url(setting('services_hero_image'), 1600, asset('images/services-hero.jpg')) }}" alt="">
         <div class="container">
             <x-breadcrumb :items="['Dịch vụ' => null]" />
             <div class="svc-hero__text">
@@ -47,7 +51,7 @@
             <article id="{{ $service->slug }}" @class(['svc-detail', 'svc-detail--reverse' => $loop->even])>
                 <div class="svc-detail__media">
                     @if ($service->image)
-                        <img src="{{ media_url($service->image) }}" alt="{{ $service->title }}" loading="lazy">
+                        <img src="{{ thumb_url($service->image, 960) }}" alt="{{ $service->title }}" loading="lazy">
                     @else
                         <x-ui-icon :name="$serviceIcons[$loop->index % count($serviceIcons)]" :size="96" :stroke="1.2" class="svc-detail__placeholder" />
                     @endif
@@ -65,7 +69,7 @@
                             <div class="svc-brands">
                                 @forelse ($brandsByService[$service->id] as $brand)
                                     <a class="svc-brand" href="{{ route('products.brand', $brand) }}" title="Sản phẩm {{ $brand->name }}">
-                                        @if ($brand->logo)<img src="{{ media_url($brand->logo) }}" alt="{{ $brand->name }}" loading="lazy">@else{{ $brand->name }}@endif
+                                        @if ($brand->logo)<img src="{{ thumb_url($brand->logo, 320) }}" alt="{{ $brand->name }}" loading="lazy">@else{{ $brand->name }}@endif
                                     </a>
                                 @empty
                                     @foreach ($service->equipment as $equipment)<span class="tag">{{ $equipment }}</span>@endforeach
@@ -81,7 +85,7 @@
                                 @foreach ($productsByService[$service->id] as $product)
                                     <li>
                                         <a href="{{ route('products.show', $product) }}">
-                                            <span class="svc-products__thumb"><img src="{{ media_url($product->image) }}" alt="" loading="lazy"></span>
+                                            <span class="svc-products__thumb"><img src="{{ thumb_url($product->image, 160) }}" alt="" loading="lazy"></span>
                                             <span class="svc-products__name">{{ $product->name }}</span>
                                             <x-ui-icon name="chevron-right" :size="16" />
                                         </a>
@@ -161,7 +165,7 @@
                     @foreach ($projects as $project)
                         <a class="card project-card" href="{{ route('projects.show', $project) }}">
                             <span class="cover">
-                                @if ($project->cover)<img src="{{ media_url($project->cover) }}" alt="" loading="lazy">@endif
+                                @if ($project->cover)<img src="{{ thumb_url($project->cover, 640) }}" alt="" loading="lazy">@endif
                                 @if ($project->industry)<span class="label">{{ $project->industry }}</span>@endif
                             </span>
                             <span class="body">

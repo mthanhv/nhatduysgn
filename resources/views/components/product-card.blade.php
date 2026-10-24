@@ -2,7 +2,7 @@
 <article class="card product-card">
     <a class="thumb" href="{{ route('products.show', $product) }}" tabindex="-1" aria-hidden="true">
         @if ($product->image)
-            <img src="{{ media_url($product->image) }}" alt="" loading="lazy">
+            <img src="{{ thumb_url($product->image, 640) }}" alt="{{ $product->name }}" loading="lazy">
         @else
             <span class="placeholder">{{ $product->brand?->name ?? setting('brand_name') }}</span>
         @endif

@@ -33,7 +33,7 @@
                     @foreach ($projects as $project)
                         <article class="card project-card">
                             <a class="cover" href="{{ route('projects.show', $project) }}" tabindex="-1" aria-hidden="true">
-                                @if ($project->cover)<img src="{{ media_url($project->cover) }}" alt="" loading="lazy">@endif
+                                @if ($project->cover)<img src="{{ thumb_url($project->cover, 640) }}" alt="" loading="lazy">@endif
                                 @if ($project->industry)<span class="label">{{ $project->industry }}</span>@endif
                             </a>
                             <div class="body">

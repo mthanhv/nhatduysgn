@@ -13,7 +13,7 @@
                 </div>
             </div>
             <div class="hero-media">
-                <img src="{{ media_url(setting('home_hero_image'), asset('images/hero-ith-cx.jpg')) }}" alt="{{ setting('home_hero_caption_title') }}" fetchpriority="high">
+                <img src="{{ thumb_url(setting('home_hero_image'), 1280, asset('images/hero-ith-cx.jpg')) }}" alt="{{ setting('home_hero_caption_title') }}" fetchpriority="high">
                 @if (setting('home_hero_caption_title'))
                     <div class="hero-caption">
                         <small>{{ setting('home_hero_caption_brand') }}</small>
@@ -38,7 +38,7 @@
                 <a class="link-more" href="{{ route('about') }}">Đọc thêm về {{ setting('brand_name') }} →</a>
             </div>
             <div class="split-media">
-                <img src="{{ media_url(setting('home_about_image'), asset('images/about-office.jpg')) }}" alt="" loading="lazy">
+                <img src="{{ thumb_url(setting('home_about_image'), 1280, asset('images/about-office.jpg')) }}" alt="" loading="lazy">
             </div>
         </div>
     </section>
@@ -115,7 +115,7 @@
                     @foreach ($brands as $brand)
                         <a class="card brand-tile" href="{{ route('products.brand', $brand) }}">
                             @if ($brand->logo)
-                                <img src="{{ media_url($brand->logo) }}" alt="{{ $brand->name }}" loading="lazy">
+                                <img src="{{ thumb_url($brand->logo, 320) }}" alt="{{ $brand->name }}" loading="lazy">
                             @else
                                 {{ $brand->name }}
                             @endif

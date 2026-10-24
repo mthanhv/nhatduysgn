@@ -26,6 +26,16 @@
     });
   });
 
+  // Product group sidebar: folded on phones so the products come first; the summary opens it.
+  if (window.matchMedia('(max-width: 960px)').matches) {
+    document.querySelectorAll('[data-tree]').forEach(function (tree) { tree.open = false; });
+  }
+  document.querySelectorAll('[data-tree] > summary').forEach(function (summary) {
+    summary.addEventListener('click', function (event) {
+      if (window.matchMedia('(min-width: 961px)').matches) { event.preventDefault(); }
+    });
+  });
+
   // Product gallery: thumbnails swap the main image.
   document.querySelectorAll('[data-gallery]').forEach(function (gallery) {
     var main = gallery.querySelector('[data-gallery-main]');

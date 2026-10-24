@@ -169,6 +169,12 @@ class ManageSiteSettings extends Page
                     Tab::make('SEO')->icon(Heroicon::OutlinedMagnifyingGlass)->schema([
                         TextInput::make('seo_title')->label('Tiêu đề trang chủ trên Google')->maxLength(70),
                         Textarea::make('seo_description')->label('Mô tả mặc định trên Google')->rows(3)->maxLength(200),
+                        TextInput::make('google_site_verification')
+                            ->label('Mã xác minh Google Search Console')
+                            ->helperText('Search Console → Thêm tài sản → Thẻ HTML: dán phần content="…". Tệp xác minh cũ google853675dffcac168c.html đã được giữ lại.'),
+                        TextInput::make('bing_site_verification')
+                            ->label('Mã xác minh Bing Webmaster Tools')
+                            ->helperText('Chỉ mục của Bing được Copilot, DuckDuckGo và một phần ChatGPT Search sử dụng. Bing → Thẻ meta msvalidate.01: dán phần content="…".'),
                     ]),
                 ]),
             ]);
@@ -209,7 +215,7 @@ class ManageSiteSettings extends Page
             'home_stats', 'home_about_title', 'home_about_text', 'home_about_points', 'home_about_image', 'industries',
             'about_hero_title', 'about_hero_text', 'about_hero_image', 'about_intro_title', 'about_intro_body', 'about_pillars',
             'about_spotlight_label', 'about_spotlight_country', 'about_spotlight_title', 'about_spotlight_text', 'about_spotlight_image',
-            'about_origins', 'about_values', 'services_intro', 'services_hero_image', 'service_benefits', 'service_faqs', 'service_steps', 'seo_title', 'seo_description',
+            'about_origins', 'about_values', 'services_intro', 'services_hero_image', 'service_benefits', 'service_faqs', 'service_steps', 'seo_title', 'seo_description', 'google_site_verification', 'bing_site_verification',
         ];
     }
 }

@@ -1,8 +1,17 @@
 @php
-    $pageTitle = trim($__env->yieldContent('title'));
+    // @section('x', $value) escapes $value; decode once so {{ }} below doesn't show "&amp;" in titles.
+    $section = fn (string $name) => html_entity_decode(trim($__env->yieldContent($name)), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $pageTitle = $section('title');
     $fullTitle = $pageTitle !== '' ? $pageTitle.' | '.setting('brand_name') : setting('seo_title');
-    $description = trim($__env->yieldContent('description')) ?: setting('seo_description');
-    $ogImage = trim($__env->yieldContent('og_image')) ?: asset('images/hero-ith-cx.jpg');
+    $description = \App\Services\Seo::text($section('description') ?: setting('seo_description'));
+    $ogImage = \App\Services\Seo::absoluteUrl($section('og_image') ?: asset('images/hero-ith-cx.jpg'));
+    $ogType = trim($__env->yieldContent('og_type')) ?: 'website';
+    // Paginated pages are canonical to themselves; every other query string (filters, tracking) is dropped.
+    $page = (int) request()->query('page', 1);
+    $canonical = $section('canonical') ?: url()->current().($page > 1 ? '?page='.$page : '');
+    $robots = app()->environment('production')
+        ? (trim($__env->yieldContent('robots')) ?: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1')
+        : 'noindex, nofollow';
     $nav = [
         ['route' => 'home', 'match' => 'home', 'label' => 'Trang chủ'],
         ['route' => 'about', 'match' => 'about', 'label' => 'Giới thiệu'],
@@ -18,33 +27,33 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $fullTitle }}</title>
-    <meta name="description" content="{{ \Illuminate\Support\Str::limit(strip_tags($description), 160) }}">
-    <link rel="canonical" href="{{ url()->current() }}">
-    <meta property="og:type" content="website">
+    <meta name="description" content="{{ $description }}">
+    <meta name="robots" content="{{ $robots }}">
+    <link rel="canonical" href="{{ $canonical }}">
+    <link rel="alternate" type="text/plain" title="Thông tin cho AI" href="{{ url('/llms.txt') }}">
+    <meta property="og:type" content="{{ $ogType }}">
     <meta property="og:site_name" content="{{ setting('company_name') }}">
     <meta property="og:title" content="{{ $fullTitle }}">
-    <meta property="og:description" content="{{ \Illuminate\Support\Str::limit(strip_tags($description), 200) }}">
-    <meta property="og:url" content="{{ url()->current() }}">
+    <meta property="og:description" content="{{ $description }}">
+    <meta property="og:url" content="{{ $canonical }}">
     <meta property="og:image" content="{{ $ogImage }}">
+    <meta property="og:image:alt" content="{{ $pageTitle !== '' ? $pageTitle : setting('brand_name') }}">
     <meta property="og:locale" content="vi_VN">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $fullTitle }}">
+    <meta name="twitter:description" content="{{ $description }}">
+    <meta name="twitter:image" content="{{ $ogImage }}">
+    @if (setting('google_site_verification'))<meta name="google-site-verification" content="{{ setting('google_site_verification') }}">@endif
+    @if (setting('bing_site_verification'))<meta name="msvalidate.01" content="{{ setting('bing_site_verification') }}">@endif
     <meta name="theme-color" content="#0E1E2E">
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="32x32">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}?v={{ filemtime(public_path('css/site.css')) }}">
-    <script type="application/ld+json">{!! json_encode([
-        '@context' => 'https://schema.org',
-        '@type' => 'Organization',
-        'name' => setting('company_name'),
-        'url' => url('/'),
-        'logo' => asset('favicon.svg'),
-        'email' => setting('email'),
-        'telephone' => setting('phone'),
-        'foundingDate' => setting('founded_year'),
-        'taxID' => setting('tax_code'),
-        'address' => ['@type' => 'PostalAddress', 'streetAddress' => setting('address'), 'addressCountry' => 'VN'],
-    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG) !!}</script>
+    <x-json-ld :data="[\App\Services\Seo::organization(), \App\Services\Seo::website()]" />
     @stack('head')
 </head>
 <body>

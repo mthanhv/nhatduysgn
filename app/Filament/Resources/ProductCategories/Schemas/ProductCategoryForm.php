@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ProductCategories\Schemas;
 
 use App\Filament\Support\Uploads;
 use App\Models\ProductCategory;
+use App\Services\Seo;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -62,7 +63,7 @@ class ProductCategoryForm
                     ]),
                     Section::make('SEO')->collapsible()->collapsed()->schema([
                         TextInput::make('meta_title')->label('Tiêu đề SEO')->maxLength(255),
-                        Textarea::make('meta_description')->label('Mô tả SEO')->rows(3)->maxLength(500),
+                        Textarea::make('meta_description')->label('Mô tả SEO')->rows(3)->maxLength(500)->placeholder(fn ($record) => $record ? Seo::categoryDescription($record, generated: true) : null)->helperText('Để trống: hệ thống tự viết mô tả như nội dung mờ trong ô (khoảng 155 ký tự).'),
                     ]),
                 ]),
             ]);

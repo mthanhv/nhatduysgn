@@ -65,7 +65,7 @@ Admin accounts: create the first one with `php artisan make:filament-user`; afte
 | `categories` | `product_categories` → product groups (temporarily, as on the old site) |
 | `brands` | `brands` + `suppliers` → brands (merged by name, e.g. supplier FAG → SCHAEFFLER; aliases in `config/legacy.php`) |
 | `products` | `products` → products (description/specs cleaned of scripts and inline styles, old image links rewritten, attachment → document) |
-| `catalog` | merges the 86 old categories into the 43 standard groups of `config/catalog.php` (see below) |
+| `catalog` | merges the 86 old categories into the 48 standard groups of `config/catalog.php` (see below) |
 | `posts` | `articles` in categories News/Project/Event → news |
 | `clients` | `customers` → client logos |
 | `contacts` | `contacts` → contact inbox (marked as read) |
@@ -79,16 +79,18 @@ php artisan legacy:import --skip-existing         # only add new records, keep a
 
 ### Product groups (`config/catalog.php`)
 
-The old site had 86 categories organised partly by brand and partly by application, with duplicates and misfiled products. They are standardised into 13 groups by application with 30 sub-groups (brands have their own pages). `config/catalog.php` lists, for each group, the old category IDs it absorbs and any old product IDs moved to it explicitly.
+The old site had 86 categories organised partly by brand and partly by application, with duplicates and misfiled products. They are standardised into 13 groups by application with 35 sub-groups (brands have their own pages; the old "Thiết bị lò hơi & trao đổi nhiệt" group was merged into "Thiết bị nong ống"). `config/catalog.php` lists, for each group, the old category IDs it absorbs and any old product IDs moved to it explicitly.
 
 ```bash
 php artisan catalog:restructure --dry-run   # show what would change
 php artisan catalog:restructure             # apply (also runs as the `catalog` import step)
 ```
 
-It is safe to re-run: products move to their group, old IDs stay on the group (so `/products/category:{id}` still redirects), emptied old categories are deleted, and once a group has been applied its name, icon, image and texts belong to editors. Groups created in the admin are never touched. To change the structure, edit the config and run the command again; `legacy:verify` checks every old category and product against it.
+Product data is cleaned on import (`App\Services\ProductTidier`): ALL-CAPS names in normal case (brands, codes, sizes kept), series codes cut at the hyphen (`DRS-` → `DRS`), codes that are only the brand removed, and "download the attached file" sentences removed when there is no file. `php artisan catalog:tidy [--dry-run]` applies the same rules to data already in the database; slugs (URLs) never change.
 
-Connection settings: `LEGACY_DB_*` and `LEGACY_WEBROOT` in `.env`. The 4 services are created by `php artisan db:seed` (the old site stored them as one article).
+It is safe to re-run: products move to their group, old IDs stay on the group (so `/products/category:{id}` still redirects), emptied old categories are deleted (a standard group removed from the config gets a 301 from its `/danh-muc/…` URL to the group that took over), and once a group has been applied its name, icon, image and texts belong to editors. Groups created in the admin are never touched. To change the structure, edit the config and run the command again; `legacy:verify` checks every old category and product against it.
+
+Connection settings: `LEGACY_DB_*` and `LEGACY_WEBROOT` in `.env`. The 4 services are created by `php artisan db:seed` (the old site stored them as one article); run it after `legacy:import`, or again later, so their images (old uploads) are found.
 
 ### Products from thietbinongong.com (`--site=tbn`)
 
@@ -102,8 +104,8 @@ php artisan legacy:verify --site=tbn           # products, upload folders, old t
 - Settings: `LEGACY_TBN_DB_DATABASE` (its dump; the Docker stack loads it into `legacy_tbn`) and `LEGACY_TBN_WEBROOT` (its `app/webroot`). Uploads are copied to `public/uploads/legacy-tbn/` (`files/products`, `files/suppliers`, `media` only).
 - Old IDs are stored as `tbn:{id}` (product `legacy_key`, group `legacy_ids`, brand `legacy_keys`) so they never clash with nhatduysgn.com's IDs.
 - Groups: the `tbn` lists in `config/catalog.php` (group *Thiết bị nong ống* plus the pipe cutting/flange facing groups).
-- A product whose code (or name) already exists among nhatduysgn.com's products is not duplicated; the existing product gets the `tbn:` ID and the import lists it.
-- If thietbinongong.com is later pointed at this server, its old product, category, brand and file URLs redirect to the new pages; other paths go to the homepage.
+- A product whose code (or name) already exists among nhatduysgn.com's products is not duplicated; the existing product gets the `tbn:` ID and the import lists it. If thietbinongong.com filed it in a finer sub-group of the same top-level group (e.g. *Đầu nong ống cho lò hơi*), it moves there. Run this import **after** the main `legacy:import`, and again if the main import is re-run.
+- **thietbinongong.com points at this site** (decided 2026-10-24): every request on that domain gets a 301 to `APP_URL`: old product, category, brand and file URLs to their new page, everything else to the homepage, so the site is never indexed twice. Go-live (same DirectAdmin account): run the tbn import first (it reads the old `app/webroot`), move the old site out of the web root (`mv ~/domains/thietbinongong.com/public_html ~/old_tbn`), link it to the app (`ln -s ~/nhatduysgn/public ~/domains/thietbinongong.com/public_html`), and issue its Let's Encrypt certificate so https:// links redirect too.
 
 ### Proving nothing was lost
 
@@ -148,6 +150,25 @@ Every old URL is answered with a **301** to its new address, so Google rankings 
 | `/gioi-thieu.html`, `/dich-vu.html`, `/chung-chi.html`, `/lien-he.html`, `/su-kien` | `/gioi-thieu`, `/dich-vu`, `/gioi-thieu#chung-nhan`, `/lien-he`, `/tin-tuc` |
 | `/files/…`, `/media/…` | `/uploads/legacy/files/…`, `/uploads/legacy/media/…` |
 
+## Search engines and AI assistants
+
+Everything is generated from the content; editors only fill an SEO field when they want to override it.
+
+| What | Where |
+|---|---|
+| Meta description | Written by `App\Services\Seo` from the record (name, code, brand, origin, opening text, group, brands) when the *Mô tả SEO* field is empty. The admin shows the generated text as a hint in that field. Old keyword-list meta descriptions are moved to the search keywords on import. |
+| Canonical / robots | Self-canonical (paginated pages keep `?page=N`, other query strings dropped). Search results and 404 pages are `noindex, follow`; every page is `noindex` outside production. |
+| Social preview | Open Graph + Twitter card with absolute, URL-encoded image links (Facebook, Zalo, LinkedIn). |
+| Structured data (JSON-LD) | Organization (both offices, contact point, brands, product groups) and WebSite on every page; BreadcrumbList; Product; CollectionPage + ItemList on group/brand pages; Article on news and projects; Service + FAQPage on /dich-vu. |
+| `/sitemap.xml` | Pages, groups, brands, products, projects and news, with image entries. |
+| `/robots.txt` | Allows search engines and AI crawlers (GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, Google-Extended, …), blocks /admin and search-result URLs. |
+| `/llms.txt`, `/llms-full.txt` | Markdown summary of the company, contacts, groups, brands and services, and the full product catalogue, for AI assistants ([llmstxt.org](https://llmstxt.org)). |
+| Verification | `public/google853675dffcac168c.html` (kept from the old site); Google/Bing meta codes in *Cài đặt website → SEO*. |
+| Speed | `public/.htaccess` compresses text responses and sets browser caching for CSS/JS/images/fonts. Images are shown through `thumb_url($path, $width)`: a resized WebP is created on first request under `public/uploads/_thumbs/` and then served as a static file (a 6.8 MB photo becomes ~130 KB). Delete that folder to regenerate. |
+| One address | In production, `http://` and `www.` (or any other domain pointed at the server) redirect 301 to `APP_URL`; thietbinongong.com is left to the legacy redirects. HSTS is sent on HTTPS. |
+
+After go-live: submit `https://nhatduysgn.com/sitemap.xml` in Google Search Console **and** Bing Webmaster Tools (Bing's index also feeds Copilot and DuckDuckGo), and test a product page with Google's Rich Results Test.
+
 ## Deploying to the current hosting (DirectAdmin / cPanel, PHP 8.3)
 
 1. **Contain the old site first** (it is compromised): take it offline or at least delete `public_html/app/webroot/filemanager/` and every `*.php*` file under `app/webroot/media` and `files`; change hosting, FTP, database and email passwords.
@@ -158,13 +179,15 @@ Every old URL is answered with a **301** to its new address, so Google rankings 
    ```bash
    composer install --no-dev --optimize-autoloader
    php artisan key:generate
-   php artisan migrate --force && php artisan db:seed --force
+   php artisan migrate --force
    php artisan legacy:import
+   php artisan legacy:import --site=tbn   # thietbinongong.com products (after the main import)
+   php artisan db:seed --force      # after the import: service images come from the old uploads
    php artisan make:filament-user
    php artisan optimize
    ```
    No SSH? Run the same commands locally against a copy and upload the project including `vendor/` and `public/js|css|fonts/filament`.
-6. Permissions: `storage/`, `bootstrap/cache/` and `public/uploads/` writable by PHP; nothing else.
+6. Permissions: `storage/`, `bootstrap/cache/` and `public/uploads/` (including the `_thumbs` folder created there) writable by PHP; nothing else. Logs rotate daily (`LOG_STACK=daily`, 14 days); the session cookie is HTTPS-only automatically when `APP_URL` is https.
 7. Check: homepage, `/admin`, send a test message from `/lien-he`, open a few old URLs (e.g. `/p832-….html`), then submit `https://nhatduysgn.com/sitemap.xml` in Google Search Console.
 
 After go-live, update with `git pull && composer install --no-dev -o && php artisan migrate --force && php artisan optimize`.

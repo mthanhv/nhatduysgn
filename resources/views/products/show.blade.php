@@ -1,10 +1,15 @@
 @extends('layouts.site')
 
-@section('title', $product->meta_title ?: $product->name)
-@section('description', $product->meta_description ?: ($product->summary ?: \Illuminate\Support\Str::limit(strip_tags((string) $product->description), 160)))
+@section('title', \App\Services\Seo::productTitle($product))
+@section('description', \App\Services\Seo::productDescription($product))
+@section('og_type', 'product')
 @if ($product->image)
     @section('og_image', media_url($product->image))
 @endif
+
+@push('head')
+    <x-json-ld :data="\App\Services\Seo::product($product)" />
+@endpush
 
 @section('content')
     @php
@@ -26,7 +31,7 @@
         <div class="gallery" data-gallery>
             <div class="main">
                 @if ($images->isNotEmpty())
-                    <img src="{{ media_url($images->first()) }}" alt="{{ $product->name }}" data-gallery-main>
+                    <img src="{{ thumb_url($images->first(), 960) }}" alt="{{ $product->name }}" fetchpriority="high" data-gallery-main>
                 @else
                     <x-ui-icon name="box" :size="96" :stroke="1.2" style="color:#9aa5b0" />
                 @endif
@@ -34,8 +39,8 @@
             @if ($images->count() > 1)
                 <div class="thumbs">
                     @foreach ($images as $image)
-                        <button type="button" data-gallery-thumb data-src="{{ media_url($image) }}" aria-current="{{ $loop->first ? 'true' : 'false' }}" aria-label="Ảnh {{ $loop->iteration }}">
-                            <img src="{{ media_url($image) }}" alt="" loading="lazy">
+                        <button type="button" data-gallery-thumb data-src="{{ thumb_url($image, 960) }}" aria-current="{{ $loop->first ? 'true' : 'false' }}" aria-label="Ảnh {{ $loop->iteration }}">
+                            <img src="{{ thumb_url($image, 160) }}" alt="{{ $product->name }} – ảnh {{ $loop->iteration }}" loading="lazy">
                         </button>
                     @endforeach
                 </div>
