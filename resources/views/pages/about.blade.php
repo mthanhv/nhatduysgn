@@ -45,7 +45,7 @@
                 <span class="eyebrow">{{ __('Chúng tôi là ai') }}</span>
                 <h2>{{ $intro->title }}</h2>
             </div>
-            <div class="prose" style="flex:1.4 1 520px">{!! $intro->body !!}@if ($intro->items)<ul>@foreach ($intro->items as $item)<li>@if ($item['title'])<strong>{{ $item['title'] }}</strong> @endif{{ $item['text'] }}</li>@endforeach</ul>@endif</div>
+            <div class="prose" style="flex:1.4 1 520px">{!! \App\Services\RichContent::render($intro->body) !!}@if ($intro->items)<ul>@foreach ($intro->items as $item)<li>@if ($item['title'])<strong>{{ $item['title'] }}</strong> @endif{{ $item['text'] }}</li>@endforeach</ul>@endif</div>
         </div>
     </section>
 

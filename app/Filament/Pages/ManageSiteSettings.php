@@ -6,6 +6,7 @@ use App\Filament\Support\Bilingual;
 use App\Filament\Support\HtmlSource;
 use App\Filament\Support\Uploads;
 use App\Models\Setting;
+use App\Services\RichContent;
 use BackedEnum;
 use Closure;
 use Filament\Actions\Action;
@@ -60,7 +61,7 @@ class ManageSiteSettings extends Page
         // Text settings show their English version (key + "_en", see Setting::TRANSLATABLE) right next to them.
         $pair = fn (string $key, Closure $field, bool $stacked = false) => Bilingual::pair($key, "{$key}_en", $field, $stacked);
         // One rich-text field per page block, read by App\Services\ContentBlock.
-        $block = fn (string $name) => RichEditor::make($name)->label('Nội dung')->toolbarButtons([['bold', 'italic', 'link'], ['h2', 'h3'], ['bulletList'], ['undo', 'redo'], [HtmlSource::NAME]]);
+        $block = fn (string $name) => RichEditor::make($name)->label('Nội dung')->toolbarButtons([['bold', 'italic', 'link'], ['h2', 'h3'], ['bulletList'], [RichContent::YOUTUBE_BLOCK], ['undo', 'redo'], [HtmlSource::NAME]]);
         $titleText = fn (string $title = 'Tiêu đề', string $text = 'Mô tả') => [
             TextInput::make('title')->label($title)->required(),
             Textarea::make('text')->label($text)->rows(2),

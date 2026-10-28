@@ -36,13 +36,7 @@ class ServiceForm
                     ]),
                     Section::make('Ảnh minh họa')->schema([
                         Uploads::image('image', 'services')->label('Ảnh chính'),
-                        Uploads::image('gallery', 'services')
-                            ->label('Ảnh bổ sung')
-                            ->multiple()
-                            ->reorderable()
-                            ->maxFiles(12)
-                            ->imageEditor(false)
-                            ->helperText('Khách bấm vào ảnh trên trang Dịch vụ để xem tất cả. JPG, PNG, WEBP hoặc GIF, tối đa 5 MB mỗi ảnh.'),
+                        Uploads::gallery('gallery', 'services', 12)->label('Ảnh bổ sung'),
                     ]),
                     Section::make('SEO')->collapsible()->collapsed()->schema([
                         Bilingual::translated('meta_title', fn (string $name) => TextInput::make($name)->label('Tiêu đề SEO')->maxLength(255), stacked: true),

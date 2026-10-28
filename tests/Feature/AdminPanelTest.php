@@ -111,6 +111,19 @@ class AdminPanelTest extends TestCase
         $this->assertSame(2, $product->fresh()->sort_order);
     }
 
+    public function test_product_edit_page_links_to_the_published_product(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $published = Product::factory()->create();
+        $hidden = Product::factory()->create(['is_published' => false]);
+
+        $this->get("/admin/products/{$published->slug}/edit")->assertOk()
+            ->assertSee('Xem trên website')
+            ->assertSee('href="'.route('products.show', $published).'"', false);
+        $this->get("/admin/products/{$hidden->slug}/edit")->assertOk()
+            ->assertDontSee('href="'.route('products.show', $hidden).'"', false);
+    }
+
     public function test_products_can_be_reordered_only_within_one_group(): void
     {
         $this->actingAs(User::factory()->create());

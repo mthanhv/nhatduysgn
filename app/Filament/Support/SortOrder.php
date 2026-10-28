@@ -19,6 +19,8 @@ class SortOrder
             ->type('number')
             ->rules(['required', 'integer', 'min:0', 'max:999999'])
             ->sortable()
-            ->extraAttributes(['style' => 'width: 6.5rem']);
+            // Shrink the column to the input instead of sharing the table width with text columns.
+            ->extraInputAttributes(['style' => 'width: 5.5rem'])
+            ->extraCellAttributes(['style' => 'width: 1%']);
     }
 }

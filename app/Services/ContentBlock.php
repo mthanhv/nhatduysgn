@@ -11,7 +11,7 @@ use DOMNode;
  *
  * - paragraphs before the main heading → `eyebrow` (the small line above the title)
  * - the first Heading (H1/H2) → `title`
- * - other paragraphs → `body` (HTML)
+ * - other paragraphs, and embedded blocks such as YouTube videos → `body` (HTML)
  * - bullet / numbered list items → `items` (bold start = item title, the rest = item text)
  * - each small heading (H3/H4) with the paragraphs under it → `sections`
  */
@@ -59,7 +59,7 @@ final class ContentBlock
             } elseif ($sections !== [] && $node->nodeName === 'p') {
                 $last = array_key_last($sections);
                 $sections[$last]['text'] = trim($sections[$last]['text'].' '.$text);
-            } elseif ($text !== '' || $node->nodeName === 'img') {
+            } elseif ($text !== '' || $node->nodeName === 'img' || ($node instanceof DOMElement && $node->getAttribute('data-type') === 'customBlock')) {
                 $body .= $node->ownerDocument->saveHTML($node);
             }
         }

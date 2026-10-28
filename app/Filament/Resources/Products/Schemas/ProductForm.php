@@ -93,12 +93,7 @@ class ProductForm
                         ]),
                         Tab::make('Hình ảnh & tài liệu')->schema([
                             Uploads::image('image', 'products')->label('Ảnh chính'),
-                            Uploads::image('gallery', 'products')
-                                ->label('Ảnh bổ sung')
-                                ->multiple()
-                                ->reorderable()
-                                ->maxFiles(12)
-                                ->imageEditor(false),
+                            Uploads::gallery('gallery', 'products', 12)->label('Ảnh bổ sung'),
                             Repeater::make('documents')
                                 ->label('Tài liệu tải về (catalogue, hướng dẫn…)')
                                 ->schema([

@@ -28,7 +28,7 @@
     <div class="container article-layout">
         <article>
             @if ($post->has_distinct_excerpt)<p class="article-lead">{{ $post->excerpt }}</p>@endif
-            <div class="prose">{!! $post->content !!}</div>
+            <div class="prose">{!! \App\Services\RichContent::render($post->content) !!}</div>
             <div class="share">
                 <span>{{ __('Chia sẻ') }}:</span>
                 <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(url()->current()) }}" target="_blank" rel="noopener">Facebook</a>

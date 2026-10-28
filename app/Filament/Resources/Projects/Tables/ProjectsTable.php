@@ -8,6 +8,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -24,10 +25,17 @@ class ProjectsTable
             ->description(SortOrder::HELP)
             ->columns([
                 ImageColumn::make('cover')->label('Ảnh')->disk('public')->imageSize(56),
-                TextColumn::make('title')->label('Dự án')->searchable()->wrap(),
+                TextColumn::make('title')
+                    ->label('Dự án')
+                    ->searchable(['title', 'client'])
+                    ->weight(FontWeight::Medium)
+                    ->wrap()
+                    ->lineClamp(2)
+                    ->description(fn (Project $record): ?string => collect([$record->client, $record->year])->filter()->implode(' · ') ?: null)
+                    ->extraCellAttributes(['style' => 'min-width: 18rem']),
                 TextColumn::make('industry')->label('Ngành')->badge()->sortable(),
-                TextColumn::make('client')->label('Khách hàng')->searchable()->toggleable(),
-                TextColumn::make('year')->label('Năm')->sortable()->toggleable(),
+                TextColumn::make('client')->label('Khách hàng')->wrap()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('year')->label('Năm')->sortable()->toggleable(isToggledHiddenByDefault: true),
                 SortOrder::column(),
                 ToggleColumn::make('is_published')->label('Hiển thị'),
             ])

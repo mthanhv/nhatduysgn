@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Filament\Support\HtmlSource;
+use App\Filament\Support\YoutubeBlock;
 use App\Models\Brand;
 use App\Models\ProductCategory;
+use App\Services\RichContent;
 use Filament\Forms\Components\RichEditor;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -27,8 +29,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Every admin rich editor gets an "HTML" button to view and edit the content's source.
-        RichEditor::configureUsing(fn (RichEditor $editor) => HtmlSource::apply($editor));
+        // Every admin rich editor gets an "HTML" button (view/edit the source) and a YouTube video block.
+        RichEditor::configureUsing(fn (RichEditor $editor) => HtmlSource::apply($editor)
+            ->customBlocks([YoutubeBlock::class])
+            ->tools([YoutubeBlock::tool()])
+            ->enableToolbarButtons([RichContent::YOUTUBE_BLOCK])
+            // The YouTube button replaces Filament's custom blocks panel, which would list only that block.
+            ->disableToolbarButtons(['customBlocks']));
 
         // Contact form: a person rarely sends more than a few messages; bots send hundreds.
         RateLimiter::for('contact-form', fn (Request $request) => [

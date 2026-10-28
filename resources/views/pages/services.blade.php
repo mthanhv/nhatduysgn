@@ -81,7 +81,7 @@
                     <span class="eyebrow">{{ __('Dịch vụ') }} {{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
                     <h2>{{ $service->title }}</h2>
                     @if ($service->summary)<p class="svc-detail__lead">{{ $service->summary }}</p>@endif
-                    @if ($service->description)<div class="prose svc-detail__prose">{!! $service->description !!}</div>@endif
+                    @if ($service->description)<div class="prose svc-detail__prose">{!! \App\Services\RichContent::render($service->description) !!}</div>@endif
 
                     <div class="cta-row">
                         <a class="btn btn-primary" style="flex:0 1 auto" href="{{ lroute('contact', ['chu-de' => 'service', 'tieu-de' => $service->title]) }}">{{ __('Liên hệ về dịch vụ này') }}</a>

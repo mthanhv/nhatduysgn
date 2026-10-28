@@ -51,13 +51,7 @@ class ProjectForm
                     ]),
                     Section::make('Hình ảnh')->schema([
                         Uploads::image('cover', 'projects')->label('Ảnh bìa'),
-                        Uploads::image('gallery', 'projects')
-                            ->label('Ảnh bổ sung')
-                            ->multiple()
-                            ->reorderable()
-                            ->maxFiles(20)
-                            ->imageEditor(false)
-                            ->helperText('Hiện thành mục "Hình ảnh dự án"; khách bấm vào để xem tất cả. JPG, PNG, WEBP hoặc GIF, tối đa 5 MB mỗi ảnh.'),
+                        Uploads::gallery('gallery', 'projects', 20)->label('Ảnh bổ sung'),
                     ]),
                     Section::make('SEO')->collapsible()->collapsed()->schema([
                         Bilingual::translated('meta_title', fn (string $name) => TextInput::make($name)->label('Tiêu đề SEO')->maxLength(255), stacked: true),

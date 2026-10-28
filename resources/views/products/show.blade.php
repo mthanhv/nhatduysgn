@@ -94,9 +94,9 @@
             @foreach ($panels as $id => $panel)
                 <div class="panel" role="tabpanel" id="panel-{{ $id }}" aria-labelledby="tab-{{ $id }}">
                     @if ($id === 'mo-ta')
-                        <div class="prose">{!! $product->description !!}</div>
+                        <div class="prose">{!! \App\Services\RichContent::render($product->description) !!}</div>
                     @elseif ($id === 'thong-so')
-                        <div class="prose">{!! $product->specifications !!}</div>
+                        <div class="prose">{!! \App\Services\RichContent::render($product->specifications) !!}</div>
                     @else
                         <div class="grid grid-280">
                             @foreach ($documents as $document)

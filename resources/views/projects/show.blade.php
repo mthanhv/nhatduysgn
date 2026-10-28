@@ -30,7 +30,7 @@
     <div class="container article-layout">
         <article>
             @if ($project->summary)<p style="font-size:20px;line-height:1.7;margin-bottom:24px">{{ $project->summary }}</p>@endif
-            <div class="prose">{!! $project->content !!}</div>
+            <div class="prose">{!! \App\Services\RichContent::render($project->content) !!}</div>
             @if ($images->count() > 1)
                 <section class="project-gallery" aria-labelledby="project-gallery-heading">
                     <h2 id="project-gallery-heading">{{ __('Hình ảnh dự án') }} <span class="muted">({{ $images->count() }})</span></h2>

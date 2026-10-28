@@ -96,6 +96,18 @@ class PublicPagesTest extends TestCase
             ->assertDontSee('aria-current="page">Sản phẩm</a>', false);
     }
 
+    public function test_product_description_shows_embedded_youtube_videos(): void
+    {
+        $product = Product::factory()->create([
+            'description' => '<p>Hướng dẫn sử dụng:</p><div data-type="customBlock" data-config="{&quot;url&quot;:&quot;https://www.youtube.com/watch?v=dQw4w9WgXcQ&quot;}" data-id="youtube"></div>',
+        ]);
+
+        $this->get(route('products.show', $product))
+            ->assertOk()
+            ->assertSee('<figure class="video-embed"><iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"', false)
+            ->assertDontSee('data-type="customBlock"', false);
+    }
+
     public function test_brand_listing_shows_its_products(): void
     {
         $brand = Brand::factory()->create(['name' => 'KLÜBER']);

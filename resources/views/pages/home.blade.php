@@ -36,7 +36,7 @@
             <div class="split-text">
                 <span class="eyebrow">{{ __('Về chúng tôi') }}</span>
                 @if ($about->title)<h2>{{ $about->title }}</h2>@endif
-                {!! $about->body !!}
+                {!! \App\Services\RichContent::render($about->body) !!}
                 @if ($about->items)
                     <ul class="checklist">
                         @foreach ($about->items as $point)
