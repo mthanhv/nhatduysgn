@@ -61,6 +61,7 @@ class CatalogRestructurer
 
             $this->moveProducts($existing);
             $this->removeMergedCategories($existing);
+            ProductCategory::renumberAsTree();
             Setting::putMany([self::APPLIED_SETTING => array_values(array_unique($this->appliedKeys))]);
             $after = ProductCategory::count();
 

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use App\Filament\Support\Bilingual;
 use App\Filament\Support\Uploads;
 use App\Services\Seo;
 use Filament\Forms\Components\Repeater;
@@ -32,17 +33,17 @@ class ProductForm
                     ->tabs([
                         Tab::make('Thông tin')->schema([
                             Grid::make(2)->schema([
-                                TextInput::make('name')
+                                Bilingual::translated('name', fn (string $name, bool $en) => TextInput::make($name)
                                     ->label('Tên sản phẩm')
-                                    ->required()
                                     ->maxLength(255)
-                                    ->live(onBlur: true)
-                                    ->afterStateUpdated(function (Set $set, Get $get, ?string $state, string $operation): void {
-                                        if ($operation === 'create' && blank($get('slug'))) {
-                                            $set('slug', Str::slug((string) $state, '-', 'vi'));
-                                        }
-                                    })
-                                    ->columnSpanFull(),
+                                    ->when(! $en, fn (TextInput $input) => $input
+                                        ->required()
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state, string $operation): void {
+                                            if ($operation === 'create' && blank($get('slug'))) {
+                                                $set('slug', Str::slug((string) $state, '-', 'vi'));
+                                            }
+                                        }))),
                                 TextInput::make('slug')
                                     ->label('Đường dẫn (slug)')
                                     ->prefix('/san-pham/')
@@ -64,7 +65,7 @@ class ProductForm
                                     ->createOptionForm([TextInput::make('name')->label('Tên thương hiệu')->required()]),
                                 TextInput::make('origin')->label('Xuất xứ')->placeholder('vd. Made in Germany')->maxLength(255),
                                 TextInput::make('sort_order')->label('Thứ tự hiển thị')->numeric()->default(0),
-                                Textarea::make('summary')->label('Mô tả ngắn')->rows(2)->maxLength(500)->columnSpanFull(),
+                                Bilingual::translated('summary', fn (string $name) => Textarea::make($name)->label('Mô tả ngắn')->rows(2)->maxLength(500)),
                                 TagsInput::make('keywords')
                                     ->label('Từ khóa tìm kiếm')
                                     ->separator(',')
@@ -76,19 +77,19 @@ class ProductForm
                             ]),
                         ]),
                         Tab::make('Mô tả & thông số')->schema([
-                            RichEditor::make('description')
+                            Bilingual::translated('description', fn (string $name) => RichEditor::make($name)
                                 ->label('Mô tả chi tiết')
                                 ->fileAttachmentsDisk('public')
                                 ->fileAttachmentsDirectory('content')
                                 ->fileAttachmentsVisibility('public')
-                                ->fileAttachmentsAcceptedFileTypes(Uploads::IMAGE_TYPES),
-                            RichEditor::make('specifications')
+                                ->fileAttachmentsAcceptedFileTypes(Uploads::IMAGE_TYPES), stacked: true),
+                            Bilingual::translated('specifications', fn (string $name, bool $en) => RichEditor::make($name)
                                 ->label('Thông số kỹ thuật')
-                                ->helperText('Dùng bảng để trình bày thông số (nút bảng trên thanh công cụ).')
+                                ->helperText($en ? null : 'Dùng bảng để trình bày thông số (nút bảng trên thanh công cụ).')
                                 ->fileAttachmentsDisk('public')
                                 ->fileAttachmentsDirectory('content')
                                 ->fileAttachmentsVisibility('public')
-                                ->fileAttachmentsAcceptedFileTypes(Uploads::IMAGE_TYPES),
+                                ->fileAttachmentsAcceptedFileTypes(Uploads::IMAGE_TYPES), stacked: true),
                         ]),
                         Tab::make('Hình ảnh & tài liệu')->schema([
                             Uploads::image('image', 'products')->label('Ảnh chính'),
@@ -111,8 +112,11 @@ class ProductForm
                         ]),
                         Tab::make('SEO')->schema([
                             Section::make()->schema([
-                                TextInput::make('meta_title')->label('Tiêu đề SEO')->maxLength(255)->helperText('Để trống sẽ dùng tên sản phẩm.'),
-                                Textarea::make('meta_description')->label('Mô tả SEO')->rows(3)->maxLength(500)->placeholder(fn ($record) => $record ? Seo::productDescription($record, generated: true) : null)->helperText('Để trống: hệ thống tự viết mô tả như nội dung mờ trong ô (khoảng 155 ký tự).'),
+                                Bilingual::translated('meta_title', fn (string $name, bool $en) => TextInput::make($name)->label('Tiêu đề SEO')->maxLength(255)->helperText($en ? null : 'Để trống sẽ dùng tên sản phẩm.')),
+                                Bilingual::translated('meta_description', fn (string $name, bool $en) => Textarea::make($name)->label('Mô tả SEO')->rows(3)->maxLength(500)
+                                    ->when(! $en, fn (Textarea $input) => $input
+                                        ->placeholder(fn ($record) => $record ? Seo::productDescription($record, generated: true) : null)
+                                        ->helperText('Để trống: hệ thống tự viết mô tả như nội dung mờ trong ô (khoảng 155 ký tự).'))),
                                 TextInput::make('legacy_id')->label('ID trên website cũ')->disabled()->dehydrated(false)->visible(fn (?string $state) => filled($state)),
                             ]),
                         ]),

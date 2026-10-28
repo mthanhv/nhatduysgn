@@ -53,8 +53,8 @@ class Seo
      */
     public static function productTitle(Product $product): string
     {
-        if (filled($product->meta_title)) {
-            return self::text($product->meta_title, 70);
+        if (filled($product->ownValue('meta_title'))) {
+            return self::text($product->ownValue('meta_title'), 70);
         }
 
         $code = $product->code && ! Str::contains(Str::upper($product->name), Str::upper($product->code)) ? ' – '.$product->code : '';
@@ -118,13 +118,13 @@ class Seo
      */
     public static function productDescription(Product $product, bool $generated = false): string
     {
-        if (! $generated && filled($product->meta_description) && ! self::isKeywordList($product->meta_description)) {
-            return self::text($product->meta_description);
+        if (! $generated && filled($product->ownValue('meta_description')) && ! self::isKeywordList($product->ownValue('meta_description'))) {
+            return self::text($product->ownValue('meta_description'));
         }
 
         $facts = collect([
-            $product->code && ! Str::contains(Str::upper($product->name), Str::upper($product->code)) ? 'mã '.$product->code : null,
-            $product->brand ? 'hãng '.$product->brand->name : null,
+            $product->code && ! Str::contains(Str::upper($product->name), Str::upper($product->code)) ? __('mã').' '.$product->code : null,
+            $product->brand ? __('hãng').' '.$product->brand->name : null,
             $product->origin,
         ])->filter()->implode(', ');
 
@@ -138,14 +138,14 @@ class Seo
         return self::text(collect([
             $product->name.($facts !== '' ? " ({$facts})" : '').'.',
             self::text($lead, 220),
-            'Hàng chính hãng, tư vấn kỹ thuật: '.setting('phone').'.',
+            __('Hàng chính hãng, tư vấn kỹ thuật: :phone.', ['phone' => setting('phone')]),
         ])->filter()->implode(' '));
     }
 
     public static function categoryDescription(ProductCategory $category, bool $generated = false): string
     {
-        if (! $generated && filled($category->meta_description) && ! self::isKeywordList($category->meta_description)) {
-            return self::text($category->meta_description);
+        if (! $generated && filled($category->ownValue('meta_description')) && ! self::isKeywordList($category->ownValue('meta_description'))) {
+            return self::text($category->ownValue('meta_description'));
         }
 
         $products = Product::query()->published()->whereIn('product_category_id', $category->descendantAndSelfIds());
@@ -157,10 +157,12 @@ class Seo
         $children = $category->children()->published()->ordered()->pluck('name');
 
         return self::text(collect([
-            $category->name.': '.(clone $products)->count().' sản phẩm chính hãng'.($brands->isNotEmpty() ? ' từ '.$brands->take(4)->implode(', ') : '').'.',
+            $category->name.': '.($brands->isNotEmpty()
+                ? __(':count sản phẩm chính hãng từ :brands.', ['count' => (clone $products)->count(), 'brands' => $brands->take(4)->implode(', ')])
+                : __(':count sản phẩm chính hãng.', ['count' => (clone $products)->count()])),
             $own,
-            $children->isNotEmpty() ? 'Gồm: '.$children->implode(', ').'.' : null,
-            'Tư vấn và cung cấp bởi '.setting('company_name').'.',
+            $children->isNotEmpty() ? __('Gồm').': '.$children->implode(', ').'.' : null,
+            __('Tư vấn và cung cấp bởi :company.', ['company' => setting('company_name')]),
         ])->filter()->implode(' '));
     }
 
@@ -175,21 +177,21 @@ class Seo
             ->take(4);
 
         return self::text(collect([
-            "Sản phẩm {$brand->name} chính hãng".($brand->country ? " ({$brand->country})" : '').' do '.setting('brand_name').' phân phối tại Việt Nam.',
-            $groups->isNotEmpty() ? 'Nhóm sản phẩm: '.$groups->implode(', ').'.' : null,
+            __('Sản phẩm :brand chính hãng:country do :name phân phối tại Việt Nam.', ['brand' => $brand->name, 'country' => $brand->country ? " ({$brand->country})" : '', 'name' => setting('brand_name')]),
+            $groups->isNotEmpty() ? __('Nhóm sản phẩm').': '.$groups->implode(', ').'.' : null,
             self::text($brand->description, 160),
-            'Tư vấn kỹ thuật: '.setting('phone').'.',
+            __('Tư vấn kỹ thuật: :phone.', ['phone' => setting('phone')]),
         ])->filter()->implode(' '));
     }
 
     public static function postDescription(Post $post, bool $generated = false): string
     {
-        return self::text(($generated ? null : $post->meta_description) ?: ($post->excerpt ?: $post->content));
+        return self::text(($generated ? null : $post->ownValue('meta_description')) ?: ($post->excerpt ?: $post->content));
     }
 
     public static function projectDescription(Project $project, bool $generated = false): string
     {
-        return self::text(($generated ? null : $project->meta_description) ?: ($project->summary ?: $project->content));
+        return self::text(($generated ? null : $project->ownValue('meta_description')) ?: ($project->summary ?: $project->content));
     }
 
     /**
@@ -236,10 +238,10 @@ class Seo
             'faxNumber' => setting('fax'),
             'foundingDate' => setting('founded_year'),
             'taxID' => setting('tax_code'),
-            'address' => $place('Trụ sở', setting('address'))['address'],
+            'address' => $place(__('Trụ sở'), setting('address'))['address'],
             'location' => array_values(array_filter([
-                $place('Trụ sở', setting('address')),
-                $place('Văn phòng đại diện', setting('office_address')),
+                $place(__('Trụ sở'), setting('address')),
+                $place(__('Văn phòng đại diện'), setting('office_address')),
             ])),
             'contactPoint' => [[
                 '@type' => 'ContactPoint',
@@ -266,11 +268,11 @@ class Seo
             '@id' => url('/').'#website',
             'url' => url('/'),
             'name' => setting('brand_name'),
-            'inLanguage' => 'vi',
+            'inLanguage' => app()->getLocale(),
             'publisher' => ['@id' => url('/').'#organization'],
             'potentialAction' => [
                 '@type' => 'SearchAction',
-                'target' => ['@type' => 'EntryPoint', 'urlTemplate' => route('products.index').'?q={search_term_string}'],
+                'target' => ['@type' => 'EntryPoint', 'urlTemplate' => lroute('products.index').'?q={search_term_string}'],
                 'query-input' => 'required name=search_term_string',
             ],
         ];
@@ -283,7 +285,7 @@ class Seo
     public static function breadcrumbs(array $items): array
     {
         $position = 1;
-        $elements = [['@type' => 'ListItem', 'position' => $position, 'name' => 'Trang chủ', 'item' => route('home')]];
+        $elements = [['@type' => 'ListItem', 'position' => $position, 'name' => __('Trang chủ'), 'item' => lroute('home')]];
 
         foreach ($items as $label => $url) {
             $elements[] = ['@type' => 'ListItem', 'position' => ++$position, 'name' => (string) $label, 'item' => $url ?? url()->current()];
@@ -302,9 +304,9 @@ class Seo
         return [
             '@context' => 'https://schema.org',
             '@type' => 'Product',
-            '@id' => route('products.show', $product).'#product',
+            '@id' => lroute('products.show', $product).'#product',
             'name' => $product->name,
-            'url' => route('products.show', $product),
+            'url' => lroute('products.show', $product),
             'sku' => $product->code,
             'mpn' => $product->code,
             'description' => self::productDescription($product),
@@ -339,7 +341,7 @@ class Seo
                 'itemListElement' => $items->map(fn (Product $product, int $index) => [
                     '@type' => 'ListItem',
                     'position' => $offset + $index + 1,
-                    'url' => route('products.show', $product),
+                    'url' => lroute('products.show', $product),
                     'name' => $product->name,
                 ])->all(),
             ],
@@ -356,12 +358,12 @@ class Seo
             '@type' => 'Article',
             'headline' => Str::limit($post->title, 110, ''),
             'description' => self::postDescription($post),
-            'url' => route('posts.show', $post),
-            'mainEntityOfPage' => route('posts.show', $post),
+            'url' => lroute('posts.show', $post),
+            'mainEntityOfPage' => lroute('posts.show', $post),
             'datePublished' => $post->published_at?->toAtomString(),
             'dateModified' => $post->updated_at?->toAtomString(),
             'image' => self::absoluteUrl($post->cover),
-            'inLanguage' => 'vi',
+            'inLanguage' => app()->getLocale(),
             'author' => ['@id' => url('/').'#organization'],
             'publisher' => ['@id' => url('/').'#organization'],
         ];
@@ -377,10 +379,10 @@ class Seo
             '@type' => 'Article',
             'headline' => Str::limit($project->title, 110, ''),
             'description' => self::projectDescription($project),
-            'url' => route('projects.show', $project),
+            'url' => lroute('projects.show', $project),
             'image' => self::absoluteUrl($project->cover),
             'about' => $project->industry,
-            'inLanguage' => 'vi',
+            'inLanguage' => app()->getLocale(),
             'author' => ['@id' => url('/').'#organization'],
             'publisher' => ['@id' => url('/').'#organization'],
         ];
@@ -397,8 +399,8 @@ class Seo
             '@context' => 'https://schema.org',
             '@type' => 'Service',
             'name' => $service->title,
-            'description' => self::text($service->meta_description ?: ($service->summary ?: $service->description)),
-            'url' => route('services').'#'.$service->slug,
+            'description' => self::text($service->ownValue('meta_description') ?: ($service->summary ?: $service->description)),
+            'url' => lroute('services').'#'.$service->slug,
             'image' => self::absoluteUrl($service->image),
             'serviceType' => $service->title,
             'areaServed' => ['@type' => 'Country', 'name' => 'Việt Nam'],

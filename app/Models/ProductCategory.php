@@ -4,17 +4,18 @@ namespace App\Models;
 
 use Database\Factories\ProductCategoryFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
-#[Fillable(['parent_id', 'name', 'slug', 'summary', 'description', 'icon', 'image', 'is_featured', 'is_published', 'sort_order', 'meta_title', 'meta_description', 'legacy_ids'])]
+#[Fillable(['parent_id', 'name', 'slug', 'summary', 'description', 'icon', 'image', 'is_featured', 'is_published', 'sort_order', 'meta_title', 'meta_description', 'legacy_ids', 'translations'])]
 class ProductCategory extends Model
 {
     /** @use HasFactory<ProductCategoryFactory> */
-    use HasFactory, HasUniqueSlug, Publishable;
+    use HasFactory, HasTranslations, HasUniqueSlug, Publishable;
 
     protected function casts(): array
     {
@@ -23,6 +24,16 @@ class ProductCategory extends Model
             'is_published' => 'boolean',
             'legacy_ids' => 'array',
         ];
+    }
+
+    /**
+     * Fields editors can fill in per language; the first one decides whether a record counts as translated.
+     *
+     * @return array<int, string>
+     */
+    public function translatable(): array
+    {
+        return ['name', 'summary', 'description', 'meta_title', 'meta_description'];
     }
 
     /**
@@ -53,6 +64,51 @@ class ProductCategory extends Model
         }
 
         return $map;
+    }
+
+    /**
+     * Published top-level groups with their published sub-groups and published product counts; `total_products` is
+     * the group's own products plus those filed under its sub-groups.
+     *
+     * @return EloquentCollection<int, ProductCategory>
+     */
+    public static function publishedTree(): EloquentCollection
+    {
+        $published = fn ($query) => $query->published();
+
+        return self::query()
+            ->published()
+            ->whereNull('parent_id')
+            ->withCount(['products' => $published])
+            ->with(['children' => fn ($query) => $query->published()->ordered()->withCount(['products' => $published])])
+            ->ordered()
+            ->get()
+            ->each(fn (self $root) => $root->setAttribute('total_products', $root->products_count + $root->children->sum('products_count')));
+    }
+
+    /**
+     * Renumbers sort_order to follow the tree (each group directly followed by its sub-groups, siblings keeping their
+     * relative order), so one flat sort_order list shows and drags the whole tree in the admin.
+     */
+    public static function renumberAsTree(): void
+    {
+        $childrenByParent = self::query()->orderBy('sort_order')->orderBy('id')->get(['id', 'parent_id', 'sort_order'])
+            ->groupBy(fn (self $category): int => (int) $category->parent_id);
+        $position = 0;
+
+        $renumber = function (int $parentId) use (&$renumber, &$position, $childrenByParent): void {
+            foreach ($childrenByParent->get($parentId, []) as $category) {
+                $position++;
+
+                if ($category->sort_order !== $position) {
+                    self::query()->whereKey($category->id)->update(['sort_order' => $position]);
+                }
+
+                $renumber($category->id);
+            }
+        };
+
+        $renumber(0);
     }
 
     /**

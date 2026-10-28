@@ -10,6 +10,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\ThumbnailController;
+use App\Http\Middleware\SetLocale;
 use App\Services\LegacyUrlResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -18,23 +19,37 @@ use Illuminate\Support\Facades\Route;
 // so redirects added by editors or by catalog:restructure also work for these URLs.
 $redirectOr404 = fn (Request $request) => app(LegacyRedirectController::class)($request, app(LegacyUrlResolver::class));
 
-Route::get('/', HomeController::class)->name('home');
-Route::get('/gioi-thieu', AboutController::class)->name('about');
-Route::get('/dich-vu', ServiceController::class)->name('services');
+// Public pages exist once per language: Vietnamese at the current URLs, English under /en with English path words
+// and route names prefixed "en." (see lroute()). Slugs are shared by both languages.
+$publicPages = function (array $path) use ($redirectOr404): void {
+    Route::get('/', HomeController::class)->name('home');
+    Route::get($path['about'], AboutController::class)->name('about');
+    Route::get($path['services'], ServiceController::class)->name('services');
 
-Route::get('/san-pham', [ProductController::class, 'index'])->name('products.index');
-Route::get('/san-pham/{product:slug}', [ProductController::class, 'show'])->name('products.show')->missing($redirectOr404);
-Route::get('/danh-muc/{category:slug}', [ProductController::class, 'category'])->name('products.category')->missing($redirectOr404);
-Route::get('/thuong-hieu/{brand:slug}', [ProductController::class, 'brand'])->name('products.brand')->missing($redirectOr404);
+    Route::get($path['products'], [ProductController::class, 'index'])->name('products.index');
+    Route::get($path['products'].'/{product:slug}', [ProductController::class, 'show'])->name('products.show')->missing($redirectOr404);
+    Route::get($path['category'].'/{category:slug}', [ProductController::class, 'category'])->name('products.category')->missing($redirectOr404);
+    Route::get($path['brand'].'/{brand:slug}', [ProductController::class, 'brand'])->name('products.brand')->missing($redirectOr404);
 
-Route::get('/du-an', [ProjectController::class, 'index'])->name('projects.index');
-Route::get('/du-an/{project:slug}', [ProjectController::class, 'show'])->name('projects.show')->missing($redirectOr404);
+    Route::get($path['projects'], [ProjectController::class, 'index'])->name('projects.index');
+    Route::get($path['projects'].'/{project:slug}', [ProjectController::class, 'show'])->name('projects.show')->missing($redirectOr404);
 
-Route::get('/tin-tuc', [PostController::class, 'index'])->name('posts.index');
-Route::get('/tin-tuc/{post:slug}', [PostController::class, 'show'])->name('posts.show')->missing($redirectOr404);
+    Route::get($path['posts'], [PostController::class, 'index'])->name('posts.index');
+    Route::get($path['posts'].'/{post:slug}', [PostController::class, 'show'])->name('posts.show')->missing($redirectOr404);
 
-Route::get('/lien-he', [ContactController::class, 'show'])->name('contact');
-Route::post('/lien-he', [ContactController::class, 'store'])->middleware('throttle:contact-form')->name('contact.store');
+    Route::get($path['contact'], [ContactController::class, 'show'])->name('contact');
+    Route::post($path['contact'], [ContactController::class, 'store'])->middleware('throttle:contact-form')->name('contact.store');
+};
+
+Route::middleware(SetLocale::class.':vi')->group(fn () => $publicPages([
+    'about' => '/gioi-thieu', 'services' => '/dich-vu', 'products' => '/san-pham', 'category' => '/danh-muc',
+    'brand' => '/thuong-hieu', 'projects' => '/du-an', 'posts' => '/tin-tuc', 'contact' => '/lien-he',
+]));
+
+Route::prefix('en')->name('en.')->middleware(SetLocale::class.':en')->group(fn () => $publicPages([
+    'about' => '/about', 'services' => '/services', 'products' => '/products', 'category' => '/category',
+    'brand' => '/brand', 'projects' => '/projects', 'posts' => '/news', 'contact' => '/contact',
+]));
 
 Route::get('/sitemap.xml', [SitemapController::class, 'sitemap'])->name('sitemap');
 Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('robots');

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\Tables;
 
+use App\Filament\Support\SortOrder;
 use App\Models\Product;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
@@ -15,6 +16,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -27,6 +29,9 @@ class ProductsTable
         return $table
             ->defaultSort('updated_at', 'desc')
             ->defaultPaginationPageOption(25)
+            // Order on the website is per group, so dragging is offered only once the list is filtered to one group.
+            ->reorderable('sort_order', fn (HasTable $livewire): bool => filled($livewire->getTableFilterState('product_category_id')['value'] ?? null))
+            ->description('Thứ tự sản phẩm trong từng nhóm trên website: số nhỏ hiện trước. Sửa số trong cột "Thứ tự", hoặc lọc theo Nhóm rồi bấm nút sắp xếp để kéo-thả.')
             ->columns([
                 ImageColumn::make('image')->label('Ảnh')->disk('public')->square()->imageSize(56),
                 TextColumn::make('name')
@@ -46,6 +51,7 @@ class ProductsTable
                     ->tooltip(fn (Product $record): ?string => $record->category?->name)
                     ->color('gray'),
                 TextColumn::make('brand.name')->label('Thương hiệu')->badge()->color('gray')->sortable()->toggleable(),
+                SortOrder::column(),
                 ToggleColumn::make('is_published')->label('Hiển thị'),
                 IconColumn::make('is_featured')->label('Tiêu biểu')->boolean()->trueIcon(Heroicon::Star)->falseIcon(Heroicon::OutlinedStar)->trueColor('warning')->falseColor('gray')->toggleable(),
                 TextColumn::make('view_count')->label('Lượt xem')->numeric()->sortable()->toggleable(isToggledHiddenByDefault: true),

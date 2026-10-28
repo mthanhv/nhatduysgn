@@ -53,7 +53,23 @@ docker compose exec app vendor/bin/pint
 | Liên hệ | Contact form inbox (unread badge, mark read/unread, reply by email). Each new message is also emailed to *Email nhận thông báo liên hệ* |
 | Hệ thống | **Cài đặt website** (company details, homepage / about / services copy, SEO), URL redirects, admin accounts |
 
+Home, About and Services page sections are each one rich-text field (*Cài đặt website → Trang chủ / Giới thiệu / Dịch vụ*), split by `App\Services\ContentBlock`: a paragraph before the Heading (H2) is the small line above the title, the Heading is the title, a bullet list gives the items (bold start = item title; stats, highlights, industries) and each small Heading (H3) with its paragraph is one card (M·R·O, commitments, service benefits and steps; for the FAQ the H3 is the question). The help text under each field says which parts it uses.
+
 Admin accounts: create the first one with `php artisan make:filament-user`; after that, in *Hệ thống → Tài khoản quản trị*. Unticking *Được phép đăng nhập* blocks an account without deleting it.
+
+## English site (`/en`)
+
+Every public page also exists in English under `/en` with English path words (`/en/products/{slug}`, `/en/category/…`, `/en/brand/…`, `/en/projects/…`, `/en/news/…`, `/en/about`, `/en/services`, `/en/contact`); slugs are shared. The VI/EN switch in the top bar opens the same page in the other language. In templates, link with `lroute()` (not `route()`) so links stay in the current language.
+
+| What | Where the English text lives |
+|---|---|
+| Interface (menus, buttons, labels) | `lang/en.json`, keyed by the Vietnamese text passed to `__()` |
+| Products, groups, brands, services, projects, news | The record's `translations` column (`HasTranslations`) |
+| Settings copy | Settings keys ending in `_en` (list in `Setting::TRANSLATABLE`; defaults in `config/site.php`) |
+
+In the admin every translatable input has its English input right next to it (labelled *Tiếng Việt* / *English*; long rich text stacks English under Vietnamese), built with `App\Filament\Support\Bilingual`.
+
+An empty English field shows the Vietnamese text. A record page whose English name/title is still empty is `noindex` in English, has no `hreflang` pair and is left out of the sitemap's English URLs.
 
 ## Migrating data from the old site
 

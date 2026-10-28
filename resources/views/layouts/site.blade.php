@@ -9,20 +9,28 @@
     // Paginated pages are canonical to themselves; every other query string (filters, tracking) is dropped.
     $page = (int) request()->query('page', 1);
     $canonical = $section('canonical') ?: url()->current().($page > 1 ? '?page='.$page : '');
+    // A record page whose English version is not filled in yet (@section('untranslated', '1')) is not offered to
+    // search engines in English: no hreflang pair, and noindex on its /en copy.
+    $locale = app()->getLocale();
+    $untranslated = trim($__env->yieldContent('untranslated')) === '1';
     $robots = app()->environment('production')
-        ? (trim($__env->yieldContent('robots')) ?: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1')
+        ? (trim($__env->yieldContent('robots')) ?: ($locale === 'en' && $untranslated ? 'noindex, follow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'))
         : 'noindex, nofollow';
+    // Current page check for both languages (English route names carry an "en." prefix).
+    $isRoute = fn (string|array $patterns): bool => request()->routeIs(...collect((array) $patterns)->flatMap(fn (string $pattern) => [$pattern, 'en.'.$pattern])->all());
     $nav = [
-        ['route' => 'home', 'match' => 'home', 'label' => 'Trang chủ'],
-        ['route' => 'about', 'match' => 'about', 'label' => 'Giới thiệu'],
-        ['route' => 'products.index', 'match' => 'products.*', 'label' => 'Sản phẩm'],
-        ['route' => 'services', 'match' => 'services', 'label' => 'Dịch vụ'],
-        ['route' => 'projects.index', 'match' => 'projects.*', 'label' => 'Dự án'],
-        ['route' => 'posts.index', 'match' => 'posts.*', 'label' => 'Tin tức'],
+        ['route' => 'home', 'match' => 'home', 'label' => __('Trang chủ')],
+        ['route' => 'about', 'match' => 'about', 'label' => __('Giới thiệu')],
+        // 'menu' items open a pop-up (partials/nav-{menu}) listing these entries; with none they stay a plain link.
+        ['route' => 'products.index', 'match' => ['products.index', 'products.category', 'products.show'], 'label' => __('Sản phẩm'), 'menu' => 'products', 'entries' => $navCategories],
+        ['route' => 'products.index', 'match' => 'products.brand', 'label' => __('Thương hiệu'), 'menu' => 'brands', 'entries' => $navBrands],
+        ['route' => 'services', 'match' => 'services', 'label' => __('Dịch vụ')],
+        ['route' => 'projects.index', 'match' => 'projects.*', 'label' => __('Dự án')],
+        ['route' => 'posts.index', 'match' => 'posts.*', 'label' => __('Tin tức')],
     ];
 @endphp
 <!doctype html>
-<html lang="vi">
+<html lang="{{ $locale }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -30,7 +38,12 @@
     <meta name="description" content="{{ $description }}">
     <meta name="robots" content="{{ $robots }}">
     <link rel="canonical" href="{{ $canonical }}">
-    <link rel="alternate" type="text/plain" title="Thông tin cho AI" href="{{ url('/llms.txt') }}">
+    @unless ($untranslated)
+        <link rel="alternate" hreflang="vi" href="{{ locale_url('vi') }}">
+        <link rel="alternate" hreflang="en" href="{{ locale_url('en') }}">
+        <link rel="alternate" hreflang="x-default" href="{{ locale_url('vi') }}">
+    @endunless
+    <link rel="alternate" type="text/plain" title="{{ __('Thông tin cho AI') }}" href="{{ url('/llms.txt') }}">
     <meta property="og:type" content="{{ $ogType }}">
     <meta property="og:site_name" content="{{ setting('company_name') }}">
     <meta property="og:title" content="{{ $fullTitle }}">
@@ -38,7 +51,7 @@
     <meta property="og:url" content="{{ $canonical }}">
     <meta property="og:image" content="{{ $ogImage }}">
     <meta property="og:image:alt" content="{{ $pageTitle !== '' ? $pageTitle : setting('brand_name') }}">
-    <meta property="og:locale" content="vi_VN">
+    <meta property="og:locale" content="{{ $locale === 'en' ? 'en_US' : 'vi_VN' }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $fullTitle }}">
     <meta name="twitter:description" content="{{ $description }}">
@@ -57,48 +70,64 @@
     @stack('head')
 </head>
 <body>
-<a class="skip-link" href="#main">Bỏ qua đến nội dung chính</a>
+<a class="skip-link" href="#main">{{ __('Bỏ qua đến nội dung chính') }}</a>
 
 <div class="topbar">
     <div class="container">
         <div style="display:flex;flex-wrap:wrap;gap:6px 24px">
-            <span>Điện thoại: <a href="{{ tel_href(setting('phone')) }}"><strong>{{ setting('phone') }}</strong></a></span>
+            <span>{{ __('Điện thoại') }}: <a href="{{ tel_href(setting('phone')) }}"><strong>{{ setting('phone') }}</strong></a></span>
             <a href="mailto:{{ setting('email') }}">{{ setting('email') }}</a>
         </div>
-        <span class="topbar-hours">{{ setting('working_hours') }}</span>
+        <div class="topbar-end">
+            <span class="topbar-hours">{{ setting('working_hours') }}</span>
+            <nav class="lang-switch" aria-label="{{ __('Ngôn ngữ') }}">
+                <a href="{{ locale_url('vi') }}" hreflang="vi" lang="vi" @if ($locale === 'vi') aria-current="true" @endif>VI</a>
+                <a href="{{ locale_url('en') }}" hreflang="en" lang="en" @if ($locale === 'en') aria-current="true" @endif>EN</a>
+            </nav>
+        </div>
     </div>
 </div>
 
 <header class="site-header">
     <div class="container">
-        <a class="brand" href="{{ route('home') }}">
+        <a class="brand" href="{{ lroute('home') }}">
             <x-logo />
             <span class="brand-text">
                 <span class="brand-name">{{ mb_strtoupper(setting('brand_name')) }}</span>
                 <span class="brand-tagline">{{ setting('tagline') }}</span>
             </span>
         </a>
-        <nav id="main-nav" class="main-nav" aria-label="Chính">
+        <nav id="main-nav" class="main-nav" aria-label="{{ __('Chính') }}">
             @foreach ($nav as $item)
-                <a href="{{ route($item['route']) }}" @if (request()->routeIs($item['match'])) aria-current="page" @endif>{{ $item['label'] }}</a>
+                @if (isset($item['menu']) && $item['entries']->isNotEmpty())
+                    {{-- A <details> pop-up opens without JavaScript; site.js only closes it on an outside click or Escape. --}}
+                    <details class="nav-menu nav-menu--{{ $item['menu'] }}" data-nav-menu>
+                        <summary @class(['is-current' => $isRoute($item['match'])])>{{ $item['label'] }} <x-ui-icon name="chevron-right" :size="16" class="nav-menu__toggle" /></summary>
+                        <div class="nav-menu__panel">
+                            @include('partials.nav-'.$item['menu'], ['entries' => $item['entries']])
+                        </div>
+                    </details>
+                @else
+                    <a href="{{ lroute($item['route']) }}" @if ($isRoute($item['match'])) aria-current="page" @endif>{{ $item['label'] }}</a>
+                @endif
             @endforeach
         </nav>
         <div class="header-actions">
-            <button type="button" class="icon-btn" data-toggle aria-controls="search-panel" aria-expanded="false" data-focus="input" aria-label="Tìm sản phẩm">
+            <button type="button" class="icon-btn" data-toggle aria-controls="search-panel" aria-expanded="false" data-focus="input" aria-label="{{ __('Tìm sản phẩm') }}">
                 <x-ui-icon name="search" />
             </button>
-            <a class="btn btn-primary btn-contact" href="{{ route('contact') }}" @if (request()->routeIs('contact')) aria-current="page" @endif>Liên hệ</a>
-            <button type="button" class="icon-btn menu-toggle" data-toggle aria-controls="main-nav" aria-expanded="false" aria-label="Mở menu">
+            <a class="btn btn-primary btn-contact" href="{{ lroute('contact') }}" @if ($isRoute('contact')) aria-current="page" @endif>{{ __('Liên hệ') }}</a>
+            <button type="button" class="icon-btn menu-toggle" data-toggle aria-controls="main-nav" aria-expanded="false" aria-label="{{ __('Mở menu') }}">
                 <x-ui-icon name="menu" />
             </button>
         </div>
     </div>
     <div id="search-panel" class="search-panel" hidden>
         <div class="container">
-            <form class="search-form" action="{{ route('products.index') }}" method="get" role="search" style="width:100%">
-                <label for="header-search" class="sr-only">Tìm sản phẩm</label>
-                <input id="header-search" type="search" name="q" placeholder="Tìm theo tên, mã sản phẩm hoặc thương hiệu — vd. Loctite 243, CX-5" value="{{ request('q') }}">
-                <button type="submit"><x-ui-icon name="search" /> Tìm</button>
+            <form class="search-form" action="{{ lroute('products.index') }}" method="get" role="search" style="width:100%">
+                <label for="header-search" class="sr-only">{{ __('Tìm sản phẩm') }}</label>
+                <input id="header-search" type="search" name="q" placeholder="{{ __('Tìm theo tên, mã sản phẩm hoặc thương hiệu — vd. Loctite 243, CX-5') }}" value="{{ request('q') }}">
+                <button type="submit"><x-ui-icon name="search" /> {{ __('Tìm') }}</button>
             </form>
         </div>
     </div>
@@ -112,49 +141,49 @@
     <div class="container cols">
         <div>
             <p class="company">{{ mb_strtoupper(setting('company_name')) }}</p>
-            <p>Trụ sở: {{ setting('address') }}</p>
-            @if (setting('office_address'))<p>VPĐD: {{ setting('office_address') }}</p>@endif
-            <p>MST: {{ setting('tax_code') }}</p>
+            <p>{{ __('Trụ sở') }}: {{ setting('address') }}</p>
+            @if (setting('office_address'))<p>{{ __('VPĐD') }}: {{ setting('office_address') }}</p>@endif
+            <p>{{ __('MST') }}: {{ setting('tax_code') }}</p>
         </div>
         <div>
-            <h3>Liên hệ</h3>
+            <h3>{{ __('Liên hệ') }}</h3>
             <ul>
-                <li>Điện thoại: <a href="{{ tel_href(setting('phone')) }}">{{ setting('phone') }}</a></li>
+                <li>{{ __('Điện thoại') }}: <a href="{{ tel_href(setting('phone')) }}">{{ setting('phone') }}</a></li>
                 @if (setting('fax'))<li>Fax: {{ setting('fax') }}</li>@endif
                 <li><a href="mailto:{{ setting('email') }}">{{ setting('email') }}</a></li>
                 <li>{{ setting('working_hours') }}</li>
             </ul>
         </div>
         <div>
-            <h3>Sản phẩm</h3>
+            <h3>{{ __('Sản phẩm') }}</h3>
             <ul>
                 @foreach ($footerCategories as $footerCategory)
-                    <li><a href="{{ route('products.category', $footerCategory) }}">{{ $footerCategory->name }}</a></li>
+                    <li><a href="{{ lroute('products.category', $footerCategory) }}">{{ $footerCategory->name }}</a></li>
                 @endforeach
             </ul>
         </div>
         <div>
-            <h3>Công ty</h3>
+            <h3>{{ __('Công ty') }}</h3>
             <ul>
-                <li><a href="{{ route('about') }}">Giới thiệu</a></li>
-                <li><a href="{{ route('services') }}">Dịch vụ</a></li>
-                <li><a href="{{ route('projects.index') }}">Dự án</a></li>
-                <li><a href="{{ route('posts.index') }}">Tin tức</a></li>
-                <li><a href="{{ route('contact') }}">Liên hệ</a></li>
+                <li><a href="{{ lroute('about') }}">{{ __('Giới thiệu') }}</a></li>
+                <li><a href="{{ lroute('services') }}">{{ __('Dịch vụ') }}</a></li>
+                <li><a href="{{ lroute('projects.index') }}">{{ __('Dự án') }}</a></li>
+                <li><a href="{{ lroute('posts.index') }}">{{ __('Tin tức') }}</a></li>
+                <li><a href="{{ lroute('contact') }}">{{ __('Liên hệ') }}</a></li>
             </ul>
         </div>
     </div>
-    <div class="container bottom">© {{ now()->year }} {{ setting('company_name') }}. Bảo lưu mọi quyền.</div>
+    <div class="container bottom">© {{ now()->year }} {{ setting('company_name') }}. {{ __('Bảo lưu mọi quyền.') }}</div>
 </footer>
 
-<nav class="mobile-bar" aria-label="Liên hệ nhanh">
-    <a class="btn btn-outline" href="{{ tel_href(setting('phone')) }}"><x-ui-icon name="phone" :size="18" /> Gọi</a>
+<nav class="mobile-bar" aria-label="{{ __('Liên hệ nhanh') }}">
+    <a class="btn btn-outline" href="{{ tel_href(setting('phone')) }}"><x-ui-icon name="phone" :size="18" /> {{ __('Gọi') }}</a>
     @if (setting('zalo'))
         <a class="btn btn-zalo" href="https://zalo.me/{{ preg_replace('/\D/', '', setting('zalo')) }}" rel="noopener" target="_blank">Zalo</a>
     @else
         <a class="btn btn-outline" href="mailto:{{ setting('email') }}"><x-ui-icon name="mail" :size="18" /> Email</a>
     @endif
-    <a class="btn btn-primary" href="{{ route('contact') }}">Liên hệ</a>
+    <a class="btn btn-primary" href="{{ lroute('contact') }}">{{ __('Liên hệ') }}</a>
 </nav>
 
 <script src="{{ asset('js/site.js') }}?v={{ filemtime(public_path('js/site.js')) }}" defer></script>

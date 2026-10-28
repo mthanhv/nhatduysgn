@@ -1,7 +1,7 @@
 @props(['items' => []])
 {{-- $items: ['Label' => url, ..., 'Current label' => null] --}}
 <nav aria-label="Breadcrumb" class="breadcrumb">
-    <a href="{{ route('home') }}">Trang chủ</a>
+    <a href="{{ lroute('home') }}">{{ __('Trang chủ') }}</a>
     @foreach ($items as $label => $url)
         <span aria-hidden="true">/</span>
         @if ($url)

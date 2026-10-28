@@ -26,6 +26,63 @@
     });
   });
 
+  // Header pop-up menus: close on a click elsewhere or Escape.
+  document.querySelectorAll('[data-nav-menu]').forEach(function (menu) {
+    document.addEventListener('click', function (event) {
+      if (menu.open && !menu.contains(event.target)) { menu.open = false; }
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && menu.open) {
+        menu.open = false;
+        menu.querySelector('summary').focus();
+      }
+    });
+  });
+
+  // Image pop-up: links inside a [data-lightbox] group (a JSON list of image URLs) open it at their index.
+  var lightbox = document.querySelector('[data-lightbox-dialog]');
+  if (lightbox && typeof lightbox.showModal === 'function') {
+    var lightboxImage = lightbox.querySelector('[data-lightbox-image]');
+    var lightboxImages = [];
+    var lightboxIndex = 0;
+    var showImage = function (index) {
+      lightboxIndex = (index + lightboxImages.length) % lightboxImages.length;
+      lightboxImage.src = lightboxImages[lightboxIndex];
+      lightbox.querySelector('[data-lightbox-counter]').textContent = lightboxImages.length > 1 ? (lightboxIndex + 1) + ' / ' + lightboxImages.length : '';
+      lightbox.querySelectorAll('[data-lightbox-prev], [data-lightbox-next]').forEach(function (button) { button.hidden = lightboxImages.length < 2; });
+    };
+
+    document.querySelectorAll('[data-lightbox] [data-lightbox-index]').forEach(function (link) {
+      link.addEventListener('click', function (event) {
+        var group = link.closest('[data-lightbox]');
+        event.preventDefault();
+        lightboxImages = JSON.parse(group.getAttribute('data-lightbox'));
+        lightboxImage.alt = group.getAttribute('data-lightbox-title') || '';
+        lightbox.querySelector('[data-lightbox-caption]').textContent = lightboxImage.alt;
+        showImage(parseInt(link.getAttribute('data-lightbox-index'), 10) || 0);
+        lightbox.showModal();
+      });
+    });
+
+    lightbox.querySelector('[data-lightbox-prev]').addEventListener('click', function () { showImage(lightboxIndex - 1); });
+    lightbox.querySelector('[data-lightbox-next]').addEventListener('click', function () { showImage(lightboxIndex + 1); });
+    lightbox.querySelector('[data-lightbox-close]').addEventListener('click', function () { lightbox.close(); });
+    // A click on the dark backdrop (the dialog itself, outside the image and buttons) closes it.
+    lightbox.addEventListener('click', function (event) { if (event.target === lightbox) { lightbox.close(); } });
+    lightbox.addEventListener('keydown', function (event) {
+      if (event.key === 'ArrowLeft') { showImage(lightboxIndex - 1); }
+      if (event.key === 'ArrowRight') { showImage(lightboxIndex + 1); }
+    });
+    // Swipe on phones.
+    var touchStartX = null;
+    lightbox.addEventListener('touchstart', function (event) { touchStartX = event.touches[0].clientX; }, { passive: true });
+    lightbox.addEventListener('touchend', function (event) {
+      var distance = touchStartX === null ? 0 : event.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(distance) > 50 && lightboxImages.length > 1) { showImage(lightboxIndex + (distance < 0 ? 1 : -1)); }
+      touchStartX = null;
+    });
+  }
+
   // Product group sidebar: folded on phones so the products come first; the summary opens it.
   if (window.matchMedia('(max-width: 960px)').matches) {
     document.querySelectorAll('[data-tree]').forEach(function (tree) { tree.open = false; });

@@ -29,7 +29,7 @@ class ContactController extends Controller
     {
         // Honeypot: bots fill the hidden "website" field; pretend success without storing anything.
         if (filled($request->input('website'))) {
-            return to_route('contact')->with('contact_sent', true);
+            return redirect(lroute('contact'))->with('contact_sent', true);
         }
 
         $message = ContactMessage::create([
@@ -45,6 +45,6 @@ class ContactController extends Controller
             Log::warning('Contact notification email failed', ['message_id' => $message->id, 'error' => $exception->getMessage()]);
         }
 
-        return to_route('contact')->with('contact_sent', true);
+        return redirect(lroute('contact'))->with('contact_sent', true);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Certificates;
 
 use App\Filament\Resources\Certificates\Pages\ManageCertificates;
+use App\Filament\Support\SortOrder;
 use App\Filament\Support\Uploads;
 use App\Models\Certificate;
 use BackedEnum;
@@ -57,9 +58,11 @@ class CertificateResource extends Resource
         return $table
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
+            ->description(SortOrder::HELP)
             ->columns([
                 ImageColumn::make('image')->label('Ảnh')->disk('public')->imageHeight(56),
                 TextColumn::make('title')->label('Chứng nhận')->searchable()->wrap(),
+                SortOrder::column(),
                 ToggleColumn::make('is_published')->label('Hiển thị'),
             ])
             ->recordActions([EditAction::make()->iconButton()->tooltip('Chỉnh sửa'), DeleteAction::make()->iconButton()->tooltip('Xóa')])

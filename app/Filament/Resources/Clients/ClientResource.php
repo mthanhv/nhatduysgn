@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Clients;
 
 use App\Filament\Resources\Clients\Pages\ManageClients;
+use App\Filament\Support\SortOrder;
 use App\Filament\Support\Uploads;
 use App\Models\Client;
 use BackedEnum;
@@ -57,9 +58,11 @@ class ClientResource extends Resource
         return $table
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
+            ->description(SortOrder::HELP)
             ->columns([
                 ImageColumn::make('logo')->label('Logo')->disk('public')->imageHeight(40),
                 TextColumn::make('name')->label('Khách hàng')->searchable(),
+                SortOrder::column(),
                 ToggleColumn::make('is_published')->label('Hiển thị'),
             ])
             ->recordActions([EditAction::make()->iconButton()->tooltip('Chỉnh sửa'), DeleteAction::make()->iconButton()->tooltip('Xóa')])

@@ -2,13 +2,14 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Support\Bilingual;
+use App\Filament\Support\HtmlSource;
 use App\Filament\Support\Uploads;
 use App\Models\Setting;
 use BackedEnum;
+use Closure;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -20,6 +21,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Text;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use UnitEnum;
@@ -43,6 +45,8 @@ class ManageSiteSettings extends Page
 
     protected static ?string $slug = 'cai-dat';
 
+    private const HELP_HERO = 'Đoạn đầu (tuỳ chọn): dòng nhỏ phía trên. Dòng định dạng Tiêu đề (H2): tiêu đề lớn. Các đoạn sau: giới thiệu.';
+
     /** @var array<string, mixed>|null */
     public ?array $data = [];
 
@@ -53,15 +57,24 @@ class ManageSiteSettings extends Page
 
     public function form(Schema $schema): Schema
     {
+        // Text settings show their English version (key + "_en", see Setting::TRANSLATABLE) right next to them.
+        $pair = fn (string $key, Closure $field, bool $stacked = false) => Bilingual::pair($key, "{$key}_en", $field, $stacked);
+        // One rich-text field per page block, read by App\Services\ContentBlock.
+        $block = fn (string $name) => RichEditor::make($name)->label('Nội dung')->toolbarButtons([['bold', 'italic', 'link'], ['h2', 'h3'], ['bulletList'], ['undo', 'redo'], [HtmlSource::NAME]]);
+        $titleText = fn (string $title = 'Tiêu đề', string $text = 'Mô tả') => [
+            TextInput::make('title')->label($title)->required(),
+            Textarea::make('text')->label($text)->rows(2),
+        ];
+
         return $schema
             ->statePath('data')
             ->components([
                 Tabs::make()->persistTabInQueryString()->tabs([
                     Tab::make('Công ty & liên hệ')->icon(Heroicon::OutlinedBuildingOffice)->schema([
+                        Text::make('Ô có nhãn "English" là nội dung trang tiếng Anh (/en); để trống sẽ hiện bản tiếng Việt. Số điện thoại, email, link và ảnh dùng chung cho cả hai ngôn ngữ.'),
+                        $pair('company_name', fn (string $name, bool $en) => TextInput::make($name)->label('Tên công ty')->required(! $en)),
                         Grid::make(2)->schema([
-                            TextInput::make('company_name')->label('Tên công ty')->required()->columnSpanFull(),
                             TextInput::make('brand_name')->label('Tên ngắn / thương hiệu')->required(),
-                            TextInput::make('tagline')->label('Khẩu hiệu dưới logo'),
                             TextInput::make('phone')->label('Điện thoại')->tel()->required(),
                             TextInput::make('fax')->label('Fax'),
                             TextInput::make('email')->label('Email liên hệ')->email()->required(),
@@ -69,106 +82,65 @@ class ManageSiteSettings extends Page
                             TextInput::make('zalo')->label('Số Zalo')->helperText('Để trống để ẩn nút Zalo.'),
                             TextInput::make('tax_code')->label('Mã số thuế'),
                             TextInput::make('founded_year')->label('Năm thành lập'),
-                            TextInput::make('working_hours')->label('Giờ làm việc'),
-                            TextInput::make('address')->label('Địa chỉ trụ sở')->required()->columnSpanFull(),
-                            TextInput::make('office_address')
-                                ->label('Địa chỉ văn phòng đại diện (VPĐD)')
-                                ->helperText('Bản đồ trên trang Liên hệ hiển thị theo địa chỉ này. Để trống để ẩn và dùng địa chỉ trụ sở.')
-                                ->columnSpanFull(),
-                            TextInput::make('map_url')->label('Link Google Maps (nút Chỉ đường)')->url()->columnSpanFull(),
-                            TextInput::make('map_embed_url')
-                                ->label('Link nhúng bản đồ (tùy chọn)')
-                                ->helperText('Để trống: bản đồ tự hiển thị theo địa chỉ. Muốn ghim chính xác: Google Maps → Chia sẻ → Nhúng bản đồ → dán phần src.')
-                                ->url()
-                                ->rule('starts_with:https://www.google.com/maps/embed')
-                                ->columnSpanFull(),
                         ]),
+                        $pair('tagline', fn (string $name) => TextInput::make($name)->label('Khẩu hiệu dưới logo')),
+                        $pair('working_hours', fn (string $name) => TextInput::make($name)->label('Giờ làm việc')),
+                        $pair('address', fn (string $name, bool $en) => TextInput::make($name)->label('Địa chỉ trụ sở')->required(! $en)),
+                        $pair('office_address', fn (string $name, bool $en) => TextInput::make($name)
+                            ->label('Địa chỉ văn phòng đại diện (VPĐD)')
+                            ->helperText($en ? null : 'Bản đồ trên trang Liên hệ hiển thị theo địa chỉ này. Để trống để ẩn và dùng địa chỉ trụ sở.')),
+                        TextInput::make('map_url')->label('Link Google Maps (nút Chỉ đường)')->url(),
+                        TextInput::make('map_embed_url')
+                            ->label('Link nhúng bản đồ (tùy chọn)')
+                            ->helperText('Để trống: bản đồ tự hiển thị theo địa chỉ. Muốn ghim chính xác: Google Maps → Chia sẻ → Nhúng bản đồ → dán phần src.')
+                            ->url()
+                            ->rule('starts_with:https://www.google.com/maps/embed'),
                     ]),
                     Tab::make('Trang chủ')->icon(Heroicon::OutlinedHome)->schema([
-                        Section::make('Phần đầu trang')->columns(2)->schema([
-                            TextInput::make('home_hero_eyebrow')->label('Dòng nhỏ phía trên tiêu đề')->columnSpanFull(),
-                            Textarea::make('home_hero_title')->label('Tiêu đề lớn')->rows(2)->required()->columnSpanFull(),
-                            Textarea::make('home_hero_text')->label('Đoạn giới thiệu')->rows(3)->columnSpanFull(),
-                            Uploads::image('home_hero_image', 'settings')->label('Ảnh sản phẩm nổi bật')->helperText('Ảnh nền trắng/trong suốt đẹp nhất. Để trống dùng ảnh mặc định.')->columnSpanFull(),
-                            TextInput::make('home_hero_caption_brand')->label('Chú thích ảnh — dòng 1'),
-                            TextInput::make('home_hero_caption_title')->label('Chú thích ảnh — dòng 2'),
-                        ]),
-                        Section::make('Số liệu nổi bật')->description('Hiển thị trên trang Giới thiệu.')->schema([
-                            Repeater::make('home_stats')->hiddenLabel()->schema([
-                                TextInput::make('value')->label('Số')->required(),
-                                TextInput::make('label')->label('Nhãn')->required(),
-                            ])->columns(2)->maxItems(4)->reorderable()->addActionLabel('Thêm số liệu'),
+                        Section::make('Phần đầu trang')->schema([
+                            $pair('home_hero_content', fn (string $name) => $block($name)->helperText(self::HELP_HERO)),
+                            Uploads::image('home_hero_image', 'settings')->label('Ảnh sản phẩm nổi bật')->helperText('Ảnh nền trắng/trong suốt đẹp nhất. Để trống dùng ảnh mặc định.'),
+                            $pair('home_hero_caption', fn (string $name) => Textarea::make($name)->label('Chú thích ảnh')->rows(2)->helperText('Dòng 1: chữ nhỏ (thương hiệu). Dòng 2: chữ đậm (tên sản phẩm). Để trống để ẩn.')),
                         ]),
                         Section::make('Khối "Về chúng tôi"')->schema([
-                            TextInput::make('home_about_title')->label('Tiêu đề'),
-                            Textarea::make('home_about_text')->label('Nội dung')->rows(4),
-                            Repeater::make('home_about_points')->label('Điểm nổi bật')->schema([
-                                TextInput::make('title')->label('In đậm')->required(),
-                                TextInput::make('text')->label('Mô tả')->required(),
-                            ])->columns(2)->reorderable()->addActionLabel('Thêm điểm'),
+                            $pair('home_about_content', fn (string $name) => $block($name)->helperText('Tiêu đề (H2), đoạn giới thiệu, rồi danh sách gạch đầu dòng các điểm nổi bật: phần in đậm đầu dòng là ý chính.'), stacked: true),
                             Uploads::image('home_about_image', 'settings')->label('Ảnh minh họa'),
                         ]),
-                        Section::make('Ngành công nghiệp phục vụ')->description('Hiển thị trên trang Giới thiệu.')->schema([
-                            Repeater::make('industries')->hiddenLabel()->schema([
-                                TextInput::make('name')->label('Ngành')->required(),
-                                Select::make('icon')->label('Biểu tượng')->options([
-                                    'oil' => 'Dầu khí', 'bolt' => 'Điện', 'factory' => 'Nhà máy', 'flask' => 'Hóa chất', 'food' => 'Thực phẩm', 'wrench' => 'Cơ khí',
-                                ]),
-                            ])->columns(2)->reorderable()->addActionLabel('Thêm ngành'),
+                        Section::make('Số liệu & ngành phục vụ')->description('Hiển thị trên trang Giới thiệu.')->schema([
+                            $pair('home_stats_content', fn (string $name) => $block($name)->label('Số liệu nổi bật')->helperText('Danh sách gạch đầu dòng, mỗi dòng một số liệu: số in đậm rồi đến nhãn, vd. **2011** năm thành lập. Tối đa 4.')),
+                            $pair('industries_content', fn (string $name) => $block($name)->label('Ngành công nghiệp phục vụ')->helperText('Danh sách gạch đầu dòng, mỗi dòng một ngành. Biểu tượng tự chọn theo tên ngành.')),
                         ]),
                     ]),
                     Tab::make('Giới thiệu')->icon(Heroicon::OutlinedInformationCircle)->schema([
                         Section::make('Phần đầu trang')->schema([
-                            Textarea::make('about_hero_title')->label('Tiêu đề lớn')->rows(2),
-                            Textarea::make('about_hero_text')->label('Đoạn giới thiệu')->rows(2),
+                            $pair('about_hero_content', fn (string $name) => $block($name)->helperText('Tiêu đề (H2) là tiêu đề lớn; đoạn tiếp theo là giới thiệu.')),
                             Uploads::image('about_hero_image', 'settings')->label('Ảnh nền'),
                         ]),
                         Section::make('Câu chuyện công ty')->schema([
-                            TextInput::make('about_intro_title')->label('Tiêu đề'),
-                            RichEditor::make('about_intro_body')->label('Nội dung')->toolbarButtons([['bold', 'italic', 'link'], ['bulletList', 'orderedList'], ['undo', 'redo']]),
+                            $pair('about_intro_content', fn (string $name) => $block($name)->helperText('Tiêu đề (H2) hiện ở cột trái; các đoạn và danh sách sau đó hiện ở cột phải.'), stacked: true),
                         ]),
-                        Section::make('Lĩnh vực M · R · O')->schema([
-                            Repeater::make('about_pillars')->hiddenLabel()->schema([
-                                TextInput::make('letter')->label('Chữ')->maxLength(2)->required(),
-                                TextInput::make('en')->label('Tiếng Anh'),
-                                TextInput::make('title')->label('Tiêu đề')->required(),
-                                Textarea::make('text')->label('Mô tả')->rows(2)->columnSpanFull(),
-                            ])->columns(3)->maxItems(4)->reorderable(),
-                        ]),
-                        Section::make('Đối tác nổi bật (JBE)')->columns(2)->schema([
-                            TextInput::make('about_spotlight_label')->label('Dòng nhỏ'),
-                            TextInput::make('about_spotlight_country')->label('Quốc gia'),
-                            TextInput::make('about_spotlight_title')->label('Tiêu đề')->columnSpanFull()->helperText('Để trống để ẩn khối này.'),
-                            Textarea::make('about_spotlight_text')->label('Nội dung')->rows(3)->columnSpanFull(),
-                            Uploads::image('about_spotlight_image', 'settings')->label('Logo đối tác')->columnSpanFull(),
-                        ]),
-                        Section::make('Thương hiệu & cam kết')->schema([
-                            Textarea::make('about_origins')->label('Xuất xứ hàng hóa')->rows(2),
-                            Repeater::make('about_values')->label('Cam kết')->schema([
-                                TextInput::make('title')->label('Tiêu đề')->required(),
-                                Textarea::make('text')->label('Mô tả')->rows(2),
-                            ])->reorderable()->addActionLabel('Thêm cam kết'),
+                        Section::make('Lĩnh vực & cam kết')->schema([
+                            $pair('about_pillars_content', fn (string $name) => $block($name)->label('Lĩnh vực M · R · O')->helperText('Mỗi lĩnh vực: một dòng Tiêu đề nhỏ (H3), vd. "Bảo trì (Maintenance)" — chữ cái lớn lấy từ chữ đầu của phần trong ngoặc — rồi một đoạn mô tả.')),
+                            $pair('about_values_content', fn (string $name) => $block($name)->label('Cam kết')->helperText('Mỗi cam kết: một dòng Tiêu đề nhỏ (H3) rồi một đoạn mô tả.')),
+                            $pair('about_origins', fn (string $name) => Textarea::make($name)->label('Xuất xứ hàng hóa')->rows(2)),
                         ]),
                     ]),
                     Tab::make('Dịch vụ')->icon(Heroicon::OutlinedWrenchScrewdriver)->schema([
-                        Textarea::make('services_intro')->label('Đoạn giới thiệu trang Dịch vụ')->rows(3),
-                        Uploads::image('services_hero_image', 'settings')->label('Ảnh nền phần đầu trang')->helperText('Để trống dùng ảnh mặc định.'),
-                        Repeater::make('service_benefits')->label('Vì sao chọn Nhật Duy')->schema([
-                            TextInput::make('title')->label('Tiêu đề')->required(),
-                            Textarea::make('text')->label('Mô tả')->rows(2),
-                        ])->columns(2)->reorderable()->maxItems(6)->addActionLabel('Thêm lý do'),
-                        Repeater::make('service_faqs')->label('Câu hỏi thường gặp')->schema([
-                            TextInput::make('question')->label('Câu hỏi')->required(),
-                            Textarea::make('answer')->label('Trả lời')->rows(3)->required(),
-                        ])->reorderable()->collapsible()->itemLabel(fn (array $state): ?string => $state['question'] ?? null)->addActionLabel('Thêm câu hỏi'),
-                        Repeater::make('service_steps')->label('Quy trình làm việc')->schema([
-                            TextInput::make('title')->label('Bước')->required(),
-                            Textarea::make('text')->label('Mô tả')->rows(2),
-                        ])->reorderable()->maxItems(6)->addActionLabel('Thêm bước'),
+                        Section::make('Phần đầu trang')->schema([
+                            $pair('services_hero_content', fn (string $name) => $block($name)->helperText(self::HELP_HERO.' Đoạn giới thiệu cũng hiện trên trang chủ.')),
+                            Uploads::image('services_hero_image', 'settings')->label('Ảnh nền')->helperText('Để trống dùng ảnh mặc định.'),
+                        ]),
+                        Section::make('Vì sao chọn & quy trình')->schema([
+                            $pair('service_benefits_content', fn (string $name) => $block($name)->label('Vì sao chọn Nhật Duy')->helperText('Mỗi lý do: một dòng Tiêu đề nhỏ (H3) rồi một đoạn mô tả. Tối đa 6.')),
+                            $pair('service_steps_content', fn (string $name) => $block($name)->label('Quy trình làm việc')->helperText('Mỗi bước: một dòng Tiêu đề nhỏ (H3) rồi một đoạn mô tả. Các bước tự đánh số.')),
+                        ]),
+                        Section::make('Câu hỏi thường gặp')->schema([
+                            $pair('service_faqs_content', fn (string $name) => $block($name)->label('Câu hỏi thường gặp')->helperText('Mỗi câu: câu hỏi là một dòng Tiêu đề nhỏ (H3), câu trả lời là đoạn văn ngay dưới. Cũng được gửi cho Google dưới dạng FAQ.'), stacked: true),
+                        ]),
                     ]),
                     Tab::make('SEO')->icon(Heroicon::OutlinedMagnifyingGlass)->schema([
-                        TextInput::make('seo_title')->label('Tiêu đề trang chủ trên Google')->maxLength(70),
-                        Textarea::make('seo_description')->label('Mô tả mặc định trên Google')->rows(3)->maxLength(200),
+                        $pair('seo_title', fn (string $name) => TextInput::make($name)->label('Tiêu đề trang chủ trên Google')->maxLength(70)),
+                        $pair('seo_description', fn (string $name) => Textarea::make($name)->label('Mô tả mặc định trên Google')->rows(3)->maxLength(200)),
                         TextInput::make('google_site_verification')
                             ->label('Mã xác minh Google Search Console')
                             ->helperText('Search Console → Thêm tài sản → Thẻ HTML: dán phần content="…". Tệp xác minh cũ google853675dffcac168c.html đã được giữ lại.'),
@@ -211,11 +183,10 @@ class ManageSiteSettings extends Page
         return [
             'company_name', 'brand_name', 'tagline', 'phone', 'fax', 'email', 'contact_notify_email', 'zalo', 'tax_code', 'founded_year',
             'working_hours', 'address', 'office_address', 'map_url', 'map_embed_url',
-            'home_hero_eyebrow', 'home_hero_title', 'home_hero_text', 'home_hero_image', 'home_hero_caption_brand', 'home_hero_caption_title',
-            'home_stats', 'home_about_title', 'home_about_text', 'home_about_points', 'home_about_image', 'industries',
-            'about_hero_title', 'about_hero_text', 'about_hero_image', 'about_intro_title', 'about_intro_body', 'about_pillars',
-            'about_spotlight_label', 'about_spotlight_country', 'about_spotlight_title', 'about_spotlight_text', 'about_spotlight_image',
-            'about_origins', 'about_values', 'services_intro', 'services_hero_image', 'service_benefits', 'service_faqs', 'service_steps', 'seo_title', 'seo_description', 'google_site_verification', 'bing_site_verification',
+            'home_hero_content', 'home_hero_image', 'home_hero_caption', 'home_about_content', 'home_about_image', 'home_stats_content', 'industries_content',
+            'about_hero_content', 'about_hero_image', 'about_intro_content', 'about_pillars_content', 'about_values_content', 'about_origins',
+            'services_hero_content', 'services_hero_image', 'service_benefits_content', 'service_steps_content', 'service_faqs_content', 'seo_title', 'seo_description', 'google_site_verification', 'bing_site_verification',
+            ...array_map(fn (string $key) => "{$key}_en", Setting::TRANSLATABLE),
         ];
     }
 }

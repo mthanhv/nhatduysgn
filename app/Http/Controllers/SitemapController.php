@@ -27,13 +27,29 @@ class SitemapController extends Controller
 
     public function sitemap(): Response
     {
+        $pages = ['home', 'about', 'services', 'products.index', 'projects.index', 'posts.index', 'contact'];
+        $categories = ProductCategory::query()->published()->get(['slug', 'translations', 'updated_at']);
+        $brands = Brand::query()->published()->whereHas('products', fn ($query) => $query->published())->get(['slug', 'translations', 'updated_at']);
+        $products = Product::query()->published()->get(['slug', 'name', 'image', 'translations', 'updated_at']);
+        $projects = Project::query()->published()->get(['slug', 'title', 'cover', 'translations', 'updated_at']);
+        $posts = Post::query()->published()->get(['slug', 'title', 'cover', 'translations', 'updated_at']);
+
+        // English pages: the fixed pages, plus records an editor has translated (untranslated ones are noindex in English).
+        $english = collect([
+            'products.category' => $categories, 'products.brand' => $brands, 'products.show' => $products,
+            'projects.show' => $projects, 'posts.show' => $posts,
+        ])->flatMap(fn ($records, string $route) => $records
+            ->filter(fn ($record) => $record->isTranslatedInto('en'))
+            ->map(fn ($record) => ['loc' => route("en.{$route}", $record), 'lastmod' => $record->updated_at]));
+
         $content = view('sitemap', [
-            'pages' => [route('home'), route('about'), route('services'), route('products.index'), route('projects.index'), route('posts.index'), route('contact')],
-            'categories' => ProductCategory::query()->published()->get(['slug', 'updated_at']),
-            'brands' => Brand::query()->published()->whereHas('products', fn ($query) => $query->published())->get(['slug', 'updated_at']),
-            'products' => Product::query()->published()->get(['slug', 'name', 'image', 'updated_at']),
-            'projects' => Project::query()->published()->get(['slug', 'title', 'cover', 'updated_at']),
-            'posts' => Post::query()->published()->get(['slug', 'title', 'cover', 'updated_at']),
+            'pages' => [...array_map(fn (string $name) => route($name), $pages), ...array_map(fn (string $name) => route("en.{$name}"), $pages)],
+            'categories' => $categories,
+            'brands' => $brands,
+            'products' => $products,
+            'projects' => $projects,
+            'posts' => $posts,
+            'english' => $english,
         ])->render();
 
         return response($content, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);

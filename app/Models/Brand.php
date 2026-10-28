@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'slug', 'logo', 'country', 'website', 'description', 'is_featured', 'is_published', 'sort_order', 'legacy_keys'])]
+#[Fillable(['name', 'slug', 'logo', 'country', 'website', 'description', 'is_featured', 'is_published', 'sort_order', 'legacy_keys', 'translations'])]
 class Brand extends Model
 {
     /** @use HasFactory<BrandFactory> */
-    use HasFactory, HasUniqueSlug, Publishable;
+    use HasFactory, HasTranslations, HasUniqueSlug, Publishable;
 
     protected function casts(): array
     {
@@ -21,6 +21,16 @@ class Brand extends Model
             'is_published' => 'boolean',
             'legacy_keys' => 'array',
         ];
+    }
+
+    /**
+     * Fields editors can fill in per language; the first one decides whether a record counts as translated.
+     *
+     * @return array<int, string>
+     */
+    public function translatable(): array
+    {
+        return ['description', 'country'];
     }
 
     /**

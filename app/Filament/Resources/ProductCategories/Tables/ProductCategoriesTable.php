@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\ProductCategories\Tables;
 
+use App\Filament\Support\SortOrder;
 use App\Models\ProductCategory;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Support\Enums\FontWeight;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -22,18 +24,24 @@ class ProductCategoriesTable
     public static function configure(Table $table): Table
     {
         return $table
+            // sort_order follows the tree (ProductCategory::renumberAsTree), so sub-groups sit right under their group.
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
+            ->afterReordering(fn () => ProductCategory::renumberAsTree())
+            ->description('Thứ tự hiển thị trên website: số nhỏ hiện trước. Sửa số trong cột "Thứ tự" hoặc bấm nút sắp xếp rồi kéo-thả. Nhóm cấp 1 di chuyển kèm các nhóm con; nhóm con chỉ đổi thứ tự trong nhóm cha của nó. Sau mỗi thay đổi, số được đánh lại liên tục từ 1.')
             ->columns([
                 TextColumn::make('name')
                     ->label('Tên nhóm')
                     ->searchable()
                     ->wrap()
-                    ->description(fn (ProductCategory $record): ?string => $record->parent ? '↳ '.$record->parent->name : null),
+                    ->formatStateUsing(fn (string $state, ProductCategory $record): string => $record->parent_id ? '↳ '.$state : $state)
+                    ->weight(fn (ProductCategory $record): ?FontWeight => $record->parent_id ? null : FontWeight::Bold)
+                    ->extraAttributes(fn (ProductCategory $record): array => $record->parent_id ? ['style' => 'padding-inline-start: 1.75rem'] : []),
                 TextColumn::make('products_count')->label('Sản phẩm')->counts('products')->sortable(),
+                // A typed number moves the group among its siblings; renumbering keeps sub-groups under their group.
+                SortOrder::column()->afterStateUpdated(fn () => ProductCategory::renumberAsTree()),
                 ToggleColumn::make('is_published')->label('Hiển thị'),
                 IconColumn::make('is_featured')->label('Chủ lực')->boolean()->trueIcon(Heroicon::Star)->falseIcon(Heroicon::OutlinedStar)->trueColor('warning')->falseColor('gray'),
-                TextColumn::make('sort_order')->label('Thứ tự')->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('level')

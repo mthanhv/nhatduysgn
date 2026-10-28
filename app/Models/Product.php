@@ -11,11 +11,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
-#[Fillable(['product_category_id', 'brand_id', 'name', 'slug', 'code', 'origin', 'summary', 'description', 'specifications', 'keywords', 'image', 'gallery', 'documents', 'is_featured', 'is_published', 'sort_order', 'meta_title', 'meta_description', 'legacy_id', 'legacy_key'])]
+#[Fillable(['product_category_id', 'brand_id', 'name', 'slug', 'code', 'origin', 'summary', 'description', 'specifications', 'keywords', 'image', 'gallery', 'documents', 'is_featured', 'is_published', 'sort_order', 'meta_title', 'meta_description', 'legacy_id', 'legacy_key', 'translations'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
-    use HasFactory, HasUniqueSlug, Publishable;
+    use HasFactory, HasTranslations, HasUniqueSlug, Publishable;
 
     protected static function booted(): void
     {
@@ -26,6 +26,9 @@ class Product extends Model
                 $product->brand?->name,
                 $product->summary,
                 $product->keywords,
+                // English name and summary, so the English site's search finds products by their English words.
+                $product->translation('name', 'en'),
+                $product->translation('summary', 'en'),
             ])));
 
             // Compact code ("CX-5" → "cx5", "Loctite 243" → "loctite243") so users can type codes without separators.
@@ -43,6 +46,16 @@ class Product extends Model
             'is_featured' => 'boolean',
             'is_published' => 'boolean',
         ];
+    }
+
+    /**
+     * Fields editors can fill in per language; the first one decides whether a record counts as translated.
+     *
+     * @return array<int, string>
+     */
+    public function translatable(): array
+    {
+        return ['name', 'summary', 'description', 'specifications', 'meta_title', 'meta_description'];
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ProductCategories\Schemas;
 
+use App\Filament\Support\Bilingual;
 use App\Filament\Support\Uploads;
 use App\Models\ProductCategory;
 use App\Services\Seo;
@@ -31,7 +32,7 @@ class ProductCategoryForm
             ->components([
                 Group::make()->columnSpan(['lg' => 2])->schema([
                     Section::make('Thông tin')->columns(2)->schema([
-                        TextInput::make('name')->label('Tên nhóm')->required()->maxLength(255)->columnSpanFull(),
+                        Bilingual::translated('name', fn (string $name, bool $en) => TextInput::make($name)->label('Tên nhóm')->required(! $en)->maxLength(255)),
                         TextInput::make('slug')
                             ->label('Đường dẫn (slug)')
                             ->prefix('/danh-muc/')
@@ -45,10 +46,10 @@ class ProductCategoryForm
                             ->searchable()
                             ->preload()
                             ->placeholder('— Nhóm cấp 1 —'),
-                        Textarea::make('summary')->label('Mô tả ngắn (hiện dưới tên nhóm)')->rows(2)->maxLength(500)->columnSpanFull(),
+                        Bilingual::translated('summary', fn (string $name) => Textarea::make($name)->label('Mô tả ngắn (hiện dưới tên nhóm)')->rows(2)->maxLength(500)),
                     ]),
                     Section::make('Giới thiệu nhóm sản phẩm')->schema([
-                        RichEditor::make('description')->hiddenLabel()->fileAttachmentsDisk('public')->fileAttachmentsDirectory('content')->fileAttachmentsVisibility('public'),
+                        Bilingual::translated('description', fn (string $name) => RichEditor::make($name)->label('Giới thiệu')->fileAttachmentsDisk('public')->fileAttachmentsDirectory('content')->fileAttachmentsVisibility('public'), stacked: true),
                     ]),
                 ]),
                 Group::make()->columnSpan(['lg' => 1])->schema([
@@ -56,14 +57,18 @@ class ProductCategoryForm
                         Toggle::make('is_published')->label('Hiển thị trên website')->default(true),
                         Toggle::make('is_featured')->label('Nhóm chủ lực (trang Sản phẩm)'),
                         Select::make('icon')->label('Biểu tượng')->options(self::ICONS),
-                        TextInput::make('sort_order')->label('Thứ tự hiển thị')->numeric()->default(0),
+                        TextInput::make('sort_order')
+                            ->label('Thứ tự hiển thị')
+                            ->numeric()
+                            ->default(fn (): int => (int) ProductCategory::max('sort_order') + 1)
+                            ->helperText('Dễ hơn: bấm nút sắp xếp ở danh sách nhóm rồi kéo-thả.'),
                     ]),
                     Section::make('Ảnh đại diện')->schema([
                         Uploads::image('image', 'categories')->hiddenLabel(),
                     ]),
                     Section::make('SEO')->collapsible()->collapsed()->schema([
-                        TextInput::make('meta_title')->label('Tiêu đề SEO')->maxLength(255),
-                        Textarea::make('meta_description')->label('Mô tả SEO')->rows(3)->maxLength(500)->placeholder(fn ($record) => $record ? Seo::categoryDescription($record, generated: true) : null)->helperText('Để trống: hệ thống tự viết mô tả như nội dung mờ trong ô (khoảng 155 ký tự).'),
+                        Bilingual::translated('meta_title', fn (string $name) => TextInput::make($name)->label('Tiêu đề SEO')->maxLength(255), stacked: true),
+                        Bilingual::translated('meta_description', fn (string $name, bool $en) => Textarea::make($name)->label('Mô tả SEO')->rows(3)->maxLength(500)->when(! $en, fn (Textarea $input) => $input->placeholder(fn ($record) => $record ? Seo::categoryDescription($record, generated: true) : null)->helperText('Để trống: hệ thống tự viết mô tả như nội dung mờ trong ô (khoảng 155 ký tự).')), stacked: true),
                     ]),
                 ]),
             ]);

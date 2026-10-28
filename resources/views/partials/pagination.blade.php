@@ -1,9 +1,9 @@
 @if ($paginator->hasPages())
-    <nav class="pagination" aria-label="Phân trang">
+    <nav class="pagination" aria-label="{{ __('Phân trang') }}">
         @if ($paginator->onFirstPage())
             <span class="disabled" aria-hidden="true">‹</span>
         @else
-            <a href="{{ $paginator->previousPageUrl() }}" rel="prev" aria-label="Trang trước">‹</a>
+            <a href="{{ $paginator->previousPageUrl() }}" rel="prev" aria-label="{{ __('Trang trước') }}">‹</a>
         @endif
         @foreach ($elements as $element)
             @if (is_string($element))
@@ -20,7 +20,7 @@
             @endif
         @endforeach
         @if ($paginator->hasMorePages())
-            <a href="{{ $paginator->nextPageUrl() }}" rel="next" aria-label="Trang sau">›</a>
+            <a href="{{ $paginator->nextPageUrl() }}" rel="next" aria-label="{{ __('Trang sau') }}">›</a>
         @else
             <span class="disabled" aria-hidden="true">›</span>
         @endif

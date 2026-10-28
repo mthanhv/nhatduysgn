@@ -27,4 +27,7 @@
         @if ($post->cover)<image:image><image:loc>{{ \App\Services\Seo::absoluteUrl($post->cover) }}</image:loc></image:image>@endif
     </url>
 @endforeach
+@foreach ($english as $page)
+    <url><loc>{{ $page['loc'] }}</loc><lastmod>{{ $page['lastmod']?->toAtomString() }}</lastmod></url>
+@endforeach
 </urlset>

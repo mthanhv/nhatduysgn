@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Projects\Tables;
 
+use App\Filament\Support\SortOrder;
 use App\Models\Project;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -20,12 +21,14 @@ class ProjectsTable
         return $table
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
+            ->description(SortOrder::HELP)
             ->columns([
                 ImageColumn::make('cover')->label('Ảnh')->disk('public')->imageSize(56),
                 TextColumn::make('title')->label('Dự án')->searchable()->wrap(),
                 TextColumn::make('industry')->label('Ngành')->badge()->sortable(),
                 TextColumn::make('client')->label('Khách hàng')->searchable()->toggleable(),
                 TextColumn::make('year')->label('Năm')->sortable()->toggleable(),
+                SortOrder::column(),
                 ToggleColumn::make('is_published')->label('Hiển thị'),
             ])
             ->filters([

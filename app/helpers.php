@@ -2,6 +2,7 @@
 
 use App\Models\Setting;
 use App\Services\Thumbnailer;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -12,6 +13,40 @@ if (! function_exists('thumb_url')) {
     function thumb_url(?string $path, int $width, ?string $fallback = null): ?string
     {
         return blank($path) ? $fallback : Thumbnailer::url($path, $width);
+    }
+}
+
+if (! function_exists('lroute')) {
+    /**
+     * URL of a public page in the current language: route('products.show') on the Vietnamese site,
+     * route('en.products.show') on the English one.
+     */
+    function lroute(string $name, mixed $parameters = [], bool $absolute = true): string
+    {
+        $localized = app()->getLocale() === 'en' ? 'en.'.$name : $name;
+
+        return route(Route::has($localized) ? $localized : $name, $parameters, $absolute);
+    }
+}
+
+if (! function_exists('locale_url')) {
+    /**
+     * The current public page in another language (same route and parameters, query string kept),
+     * or that language's home page when the page has no counterpart.
+     */
+    function locale_url(string $locale): string
+    {
+        $route = request()->route();
+        $name = Str::after((string) $route?->getName(), 'en.');
+        $target = $locale === 'en' ? 'en.'.$name : $name;
+
+        if ($name === '' || ! Route::has($target) || ! Route::has('en.'.$name)) {
+            return route($locale === 'en' ? 'en.home' : 'home');
+        }
+
+        $query = request()->query();
+
+        return route($target, $route->parameters()).($query ? '?'.http_build_query($query) : '');
     }
 }
 

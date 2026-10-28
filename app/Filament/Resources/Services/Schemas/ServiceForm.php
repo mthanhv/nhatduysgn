@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\Services\Schemas;
 
+use App\Filament\Support\Bilingual;
 use App\Filament\Support\Uploads;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -21,12 +21,11 @@ class ServiceForm
             ->components([
                 Group::make()->columnSpan(['lg' => 2])->schema([
                     Section::make('Thông tin')->schema([
-                        TextInput::make('title')->label('Tên dịch vụ')->required()->maxLength(255),
-                        Textarea::make('summary')->label('Tóm tắt (hiện trên trang chủ)')->rows(2)->maxLength(500),
-                        TagsInput::make('equipment')->label('Thiết bị / thương hiệu sử dụng')->placeholder('vd. ITH'),
+                        Bilingual::translated('title', fn (string $name, bool $en) => TextInput::make($name)->label('Tên dịch vụ')->required(! $en)->maxLength(255)),
+                        Bilingual::translated('summary', fn (string $name) => Textarea::make($name)->label('Tóm tắt (hiện trên trang chủ)')->rows(2)->maxLength(500)),
                     ]),
                     Section::make('Mô tả chi tiết')->schema([
-                        RichEditor::make('description')->hiddenLabel()->fileAttachmentsDisk('public')->fileAttachmentsDirectory('content')->fileAttachmentsVisibility('public'),
+                        Bilingual::translated('description', fn (string $name) => RichEditor::make($name)->label('Mô tả chi tiết')->fileAttachmentsDisk('public')->fileAttachmentsDirectory('content')->fileAttachmentsVisibility('public'), stacked: true),
                     ]),
                 ]),
                 Group::make()->columnSpan(['lg' => 1])->schema([
@@ -36,11 +35,18 @@ class ServiceForm
                         TextInput::make('slug')->label('Mã neo (slug)')->prefix('#')->alphaDash()->maxLength(190)->unique(ignoreRecord: true)->helperText('Để trống để tự tạo.'),
                     ]),
                     Section::make('Ảnh minh họa')->schema([
-                        Uploads::image('image', 'services')->hiddenLabel(),
+                        Uploads::image('image', 'services')->label('Ảnh chính'),
+                        Uploads::image('gallery', 'services')
+                            ->label('Ảnh bổ sung')
+                            ->multiple()
+                            ->reorderable()
+                            ->maxFiles(12)
+                            ->imageEditor(false)
+                            ->helperText('Khách bấm vào ảnh trên trang Dịch vụ để xem tất cả. JPG, PNG, WEBP hoặc GIF, tối đa 5 MB mỗi ảnh.'),
                     ]),
                     Section::make('SEO')->collapsible()->collapsed()->schema([
-                        TextInput::make('meta_title')->label('Tiêu đề SEO')->maxLength(255),
-                        Textarea::make('meta_description')->label('Mô tả SEO')->rows(3)->maxLength(500),
+                        Bilingual::translated('meta_title', fn (string $name) => TextInput::make($name)->label('Tiêu đề SEO')->maxLength(255), stacked: true),
+                        Bilingual::translated('meta_description', fn (string $name) => Textarea::make($name)->label('Mô tả SEO')->rows(3)->maxLength(500), stacked: true),
                     ]),
                 ]),
             ]);

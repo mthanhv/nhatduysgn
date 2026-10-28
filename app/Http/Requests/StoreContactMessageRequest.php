@@ -38,14 +38,14 @@ class StoreContactMessageRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'topic' => 'chủ đề',
-            'name' => 'họ và tên',
-            'company' => 'công ty',
+            'topic' => __('chủ đề'),
+            'name' => __('họ và tên'),
+            'company' => __('công ty'),
             'email' => 'email',
-            'phone' => 'số điện thoại',
-            'subject' => 'tiêu đề',
-            'message' => 'nội dung',
-            'consent' => 'đồng ý xử lý thông tin',
+            'phone' => __('số điện thoại'),
+            'subject' => __('tiêu đề'),
+            'message' => __('nội dung'),
+            'consent' => __('đồng ý xử lý thông tin'),
         ];
     }
 
@@ -55,12 +55,12 @@ class StoreContactMessageRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'required' => 'Vui lòng nhập :attribute.',
-            'email' => 'Địa chỉ email không hợp lệ.',
-            'max' => ':Attribute quá dài.',
-            'message.min' => 'Nội dung cần ít nhất :min ký tự.',
-            'phone.regex' => 'Số điện thoại chỉ gồm chữ số và các ký tự + - ( ).',
-            'consent.accepted' => 'Vui lòng đồng ý để chúng tôi sử dụng thông tin nhằm phản hồi yêu cầu.',
+            'required' => __('Vui lòng nhập :attribute.'),
+            'email' => __('Địa chỉ email không hợp lệ.'),
+            'max' => __(':Attribute quá dài.'),
+            'message.min' => __('Nội dung cần ít nhất :min ký tự.'),
+            'phone.regex' => __('Số điện thoại chỉ gồm chữ số và các ký tự + - ( ).'),
+            'consent.accepted' => __('Vui lòng đồng ý để chúng tôi sử dụng thông tin nhằm phản hồi yêu cầu.'),
         ];
     }
 }

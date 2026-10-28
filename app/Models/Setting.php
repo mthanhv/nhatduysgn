@@ -19,6 +19,17 @@ class Setting extends Model
 
     private const CACHE_KEY = 'site-settings';
 
+    /**
+     * Text settings with an English version stored under "{key}_en"; the English site falls back to the Vietnamese
+     * value while the English one is empty.
+     */
+    public const TRANSLATABLE = [
+        'company_name', 'tagline', 'working_hours', 'address', 'office_address', 'seo_title', 'seo_description',
+        'home_hero_content', 'home_hero_caption', 'home_about_content', 'home_stats_content', 'industries_content',
+        'about_hero_content', 'about_intro_content', 'about_pillars_content', 'about_origins',
+        'about_values_content', 'services_hero_content', 'service_benefits_content', 'service_steps_content', 'service_faqs_content',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -27,6 +38,19 @@ class Setting extends Model
     }
 
     public static function get(string $key, mixed $default = null): mixed
+    {
+        if (app()->getLocale() === 'en' && in_array($key, self::TRANSLATABLE, true)) {
+            $english = self::stored("{$key}_en");
+
+            if (filled($english)) {
+                return $english;
+            }
+        }
+
+        return self::stored($key, $default);
+    }
+
+    private static function stored(string $key, mixed $default = null): mixed
     {
         $stored = Cache::rememberForever(self::CACHE_KEY, fn () => self::query()->pluck('value', 'key')->all());
 

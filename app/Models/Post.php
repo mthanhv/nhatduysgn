@@ -11,11 +11,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-#[Fillable(['title', 'slug', 'excerpt', 'content', 'cover', 'published_at', 'is_published', 'meta_title', 'meta_description', 'legacy_id'])]
+#[Fillable(['title', 'slug', 'excerpt', 'content', 'cover', 'published_at', 'is_published', 'meta_title', 'meta_description', 'legacy_id', 'translations'])]
 class Post extends Model
 {
     /** @use HasFactory<PostFactory> */
-    use HasFactory, HasUniqueSlug;
+    use HasFactory, HasTranslations, HasUniqueSlug;
 
     protected function casts(): array
     {
@@ -23,6 +23,16 @@ class Post extends Model
             'published_at' => 'datetime',
             'is_published' => 'boolean',
         ];
+    }
+
+    /**
+     * Fields editors can fill in per language; the first one decides whether a record counts as translated.
+     *
+     * @return array<int, string>
+     */
+    public function translatable(): array
+    {
+        return ['title', 'excerpt', 'content', 'meta_title', 'meta_description'];
     }
 
     /**

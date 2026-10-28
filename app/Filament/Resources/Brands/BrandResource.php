@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\Brands;
 
 use App\Filament\Resources\Brands\Pages\ManageBrands;
+use App\Filament\Support\Bilingual;
+use App\Filament\Support\SortOrder;
 use App\Filament\Support\Uploads;
 use App\Models\Brand;
 use BackedEnum;
@@ -49,10 +51,10 @@ class BrandResource extends Resource
             ->components([
                 TextInput::make('name')->label('Tên thương hiệu')->required()->maxLength(255),
                 TextInput::make('slug')->label('Đường dẫn (slug)')->prefix('/thuong-hieu/')->alphaDash()->maxLength(190)->unique(ignoreRecord: true)->helperText('Để trống để tự tạo.'),
-                TextInput::make('country')->label('Quốc gia')->maxLength(255),
                 TextInput::make('website')->label('Website hãng')->url()->maxLength(255),
                 Uploads::image('logo', 'brands')->label('Logo')->columnSpanFull(),
-                Textarea::make('description')->label('Giới thiệu ngắn')->rows(3)->columnSpanFull(),
+                Bilingual::translated('country', fn (string $name) => TextInput::make($name)->label('Quốc gia')->maxLength(255)),
+                Bilingual::translated('description', fn (string $name) => Textarea::make($name)->label('Giới thiệu ngắn')->rows(3)),
                 TextInput::make('sort_order')->label('Thứ tự hiển thị')->numeric()->default(0),
                 Toggle::make('is_published')->label('Hiển thị trên website')->default(true),
                 Toggle::make('is_featured')->label('Hiện trên trang chủ'),
@@ -64,11 +66,13 @@ class BrandResource extends Resource
         return $table
             ->defaultSort('sort_order')
             ->reorderable('sort_order')
+            ->description(SortOrder::HELP)
             ->columns([
                 ImageColumn::make('logo')->label('Logo')->disk('public')->imageHeight(36),
                 TextColumn::make('name')->label('Thương hiệu')->searchable()->sortable(),
                 TextColumn::make('country')->label('Quốc gia')->toggleable(),
                 TextColumn::make('products_count')->label('Sản phẩm')->counts('products')->sortable(),
+                SortOrder::column(),
                 ToggleColumn::make('is_published')->label('Hiển thị'),
                 IconColumn::make('is_featured')->label('Trang chủ')->boolean()->trueIcon(Heroicon::Star)->falseIcon(Heroicon::OutlinedStar)->trueColor('warning')->falseColor('gray'),
             ])
