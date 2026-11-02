@@ -7,6 +7,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
+use Filament\Pages\BasePage;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -23,6 +24,12 @@ use Illuminate\View\View;
 
 class AdminPanelProvider extends PanelProvider
 {
+    public function boot(): void
+    {
+        // Keep Save / Cancel pinned to the bottom of every create/edit page, like the site-settings save button.
+        BasePage::stickyFormActions();
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel

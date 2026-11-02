@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\ManageSiteSettings;
-use App\Filament\Resources\Brands\Pages\ManageBrands;
+use App\Filament\Resources\Brands\Pages\ListBrands;
 use App\Filament\Resources\Certificates\Pages\ManageCertificates;
 use App\Filament\Resources\Clients\Pages\ManageClients;
 use App\Filament\Resources\ContactMessages\Pages\ViewContactMessage;
@@ -15,6 +15,7 @@ use App\Filament\Widgets\ContentChecklist;
 use App\Filament\Widgets\LatestContactMessages;
 use App\Filament\Widgets\SiteStatsOverview;
 use App\Filament\Widgets\WelcomeBanner;
+use App\Models\Brand;
 use App\Models\ContactMessage;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -46,12 +47,13 @@ class AdminPanelTest extends TestCase
         $this->actingAs(User::factory()->create());
         $product = Product::factory()->create();
         $message = ContactMessage::factory()->create();
+        $brand = Brand::factory()->create();
 
         $urls = [
             '/admin',
             '/admin/products', '/admin/products/create', "/admin/products/{$product->slug}/edit",
             '/admin/product-categories', '/admin/product-categories/create',
-            '/admin/brands', '/admin/services', '/admin/services/create', '/admin/projects', '/admin/projects/create',
+            '/admin/brands', '/admin/brands/create', "/admin/brands/{$brand->slug}/edit", '/admin/services', '/admin/services/create', '/admin/projects', '/admin/projects/create',
             '/admin/posts', '/admin/posts/create', '/admin/clients', '/admin/certificates',
             '/admin/contact-messages', "/admin/contact-messages/{$message->id}",
             '/admin/redirects', '/admin/users', '/admin/cai-dat',
@@ -59,6 +61,16 @@ class AdminPanelTest extends TestCase
 
         foreach ($urls as $url) {
             $this->get($url)->assertOk();
+        }
+    }
+
+    public function test_create_and_edit_pages_keep_their_save_buttons_pinned(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $brand = Brand::factory()->create();
+
+        foreach (['/admin/brands/create', "/admin/brands/{$brand->slug}/edit", '/admin/products/create'] as $url) {
+            $this->get($url)->assertOk()->assertSee('fi-sticky', false);
         }
     }
 
@@ -103,7 +115,7 @@ class AdminPanelTest extends TestCase
         $this->actingAs(User::factory()->create());
         $product = Product::factory()->create(['sort_order' => 5]);
 
-        foreach ([ListProducts::class, ListProductCategories::class, ManageBrands::class, ListServices::class, ListProjects::class, ManageClients::class, ManageCertificates::class] as $page) {
+        foreach ([ListProducts::class, ListProductCategories::class, ListBrands::class, ListServices::class, ListProjects::class, ManageClients::class, ManageCertificates::class] as $page) {
             Livewire::test($page)->assertTableColumnExists('sort_order');
         }
 
