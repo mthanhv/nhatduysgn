@@ -306,4 +306,30 @@ class PublicPagesTest extends TestCase
         $this->get(route('sitemap'))->assertDontSee(route('services'))->assertDontSee(route('en.services'));
         $this->get(route('llms'))->assertDontSee(route('services'))->assertDontSee('Tháo lắp bu lông bằng thủy lực');
     }
+
+    public function test_header_footer_and_contact_page_show_the_phone_and_call_to_action_blocks_show_the_hotline(): void
+    {
+        Setting::putMany(['phone' => '028 7300 7797', 'hotline' => '0917 569 349']);
+        $product = Product::factory()->create();
+
+        $this->get(route('contact'))->assertOk()
+            ->assertSee('<a class="card channel" href="tel:02873007797">', false)
+            ->assertSee('<span class="value">028 7300 7797</span>', false);
+
+        $this->get(route('home'))->assertOk()
+            ->assertSee('Điện thoại: <a href="tel:02873007797">', false)
+            ->assertSee('Gọi 0917 569 349')
+            ->assertSee('class="btn btn-outline" href="tel:0917569349"', false);
+
+        $this->get(route('products.show', $product))->assertOk()->assertSee('<a href="tel:0917569349"><strong>0917 569 349</strong></a>', false);
+        $this->get(route('posts.index'))->assertOk()->assertSee('class="news-widget__phone" href="tel:0917569349"', false);
+    }
+
+    public function test_call_to_action_blocks_use_the_phone_while_no_hotline_is_set(): void
+    {
+        Setting::putMany(['phone' => '028 7300 7797', 'hotline' => null]);
+
+        $this->get(route('products.show', Product::factory()->create()))->assertOk()
+            ->assertSee('<a href="tel:02873007797"><strong>028 7300 7797</strong></a>', false);
+    }
 }

@@ -100,7 +100,7 @@
                 <span class="icon-tile"><x-ui-icon name="phone" :size="22" :stroke="1.9" /></span>
                 <strong style="font-size:16px">{{ __('Cần tư vấn chọn thiết bị?') }}</strong>
                 <span class="muted" style="font-size:14px">{{ __('Cho chúng tôi biết thông số và điều kiện vận hành.') }}</span>
-                <a href="{{ tel_href(setting('phone')) }}" style="font-size:18px;font-weight:800">{{ setting('phone') }}</a>
+                <a href="{{ tel_href(hotline_number()) }}" style="font-size:18px;font-weight:800">{{ hotline_number() }}</a>
                 <a class="link-more" href="{{ lroute('contact') }}">{{ __('Gửi liên hệ') }} →</a>
             </div>
         </aside>

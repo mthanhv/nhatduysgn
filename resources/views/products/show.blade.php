@@ -72,7 +72,7 @@
                         <a class="btn btn-outline btn-lg" href="{{ media_url($documents->first()['file']) }}" target="_blank" rel="noopener"><x-ui-icon name="download" :size="18" /> {{ __('Tải tài liệu') }}</a>
                     @endif
                 </div>
-                <span class="muted" style="font-size:14px">{{ __('Hoặc gọi') }} <a href="{{ tel_href(setting('phone')) }}"><strong>{{ setting('phone') }}</strong></a> {{ __('để được tư vấn trực tiếp.') }}</span>
+                <span class="muted" style="font-size:14px">{{ __('Hoặc gọi') }} <a href="{{ tel_href(hotline_number()) }}"><strong>{{ hotline_number() }}</strong></a> {{ __('để được tư vấn trực tiếp.') }}</span>
             </div>
         </div>
     </section>

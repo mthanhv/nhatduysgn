@@ -7,7 +7,7 @@
 @endphp
 # {!! setting('company_name') !!}: danh mục sản phẩm
 
-> Toàn bộ sản phẩm đang giới thiệu trên {{ url('/') }}. Hàng chính hãng; giá báo theo yêu cầu. Liên hệ: {!! setting('phone') !!} · {!! setting('email') !!} · {{ route('contact') }}
+> Toàn bộ sản phẩm đang giới thiệu trên {{ url('/') }}. Hàng chính hãng; giá báo theo yêu cầu. Liên hệ: {!! hotline_number() !!} · {!! setting('email') !!} · {{ route('contact') }}
 
 @foreach ($categories as $category)
 ## {!! $category->name !!}

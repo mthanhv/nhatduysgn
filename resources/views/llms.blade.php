@@ -7,6 +7,9 @@
 ## Liên hệ
 
 - Điện thoại: {!! setting('phone') !!}
+@if (setting('hotline'))
+- Hotline: {!! setting('hotline') !!}
+@endif
 - Email: {!! setting('email') !!}
 @if (setting('zalo'))
 - Zalo: {!! setting('zalo') !!}

@@ -318,9 +318,42 @@ class LegacyVerifier
     }
 
     /**
-     * Every safe file in the old upload folders must exist under public/uploads/legacy.
+     * All text stored in the new database plus the seeders (which fill images from old uploads), lower-cased and
+     * URL-decoded, to tell whether an upload path is still used anywhere.
      */
+    private function newSiteReferences(): string
+    {
+        $skip = ['cache', 'cache_locks', 'sessions', 'jobs', 'job_batches', 'failed_jobs', 'migrations', 'password_reset_tokens'];
+        $text = '';
+
+        $schema = DB::connection()->getSchemaBuilder();
+
+        // Only the site's own database: without a schema MariaDB lists every database the user can read (e.g. legacy).
+        foreach ($schema->getTableListing($schema->getCurrentSchemaName(), schemaQualified: false) as $table) {
+            if (in_array($table, $skip, true)) {
+                continue;
+            }
+
+            foreach (DB::table($table)->cursor() as $row) {
+                foreach ((array) $row as $value) {
+                    if (is_string($value) && $value !== '') {
+                        $text .= "\n".rawurldecode(str_replace('\\/', '/', $value));
+                    }
+                }
+            }
+        }
+
+        foreach (glob(database_path('seeders/*.php')) as $seeder) {
+            $text .= "\n".file_get_contents($seeder);
+        }
+
+        return mb_strtolower($text);
+    }
+
     /**
+     * Every safe file in the old upload folders must exist under public/uploads/legacy, unless nothing on the new site
+     * uses it (unused old files may be deleted to save space; old direct links to them then return 404).
+     *
      * @param  array<int, string>  $folders
      */
     private function checkUploadFolders(?string $prefix = null, array $folders = ['files', 'media']): void
@@ -335,7 +368,9 @@ class LegacyVerifier
         $prefix ??= config('legacy.uploads_prefix');
         $problems = [];
         $skipped = [];
+        $removedUnused = 0;
         $checked = 0;
+        $references = null;
 
         foreach ($folders as $folder) {
             $source = $this->webroot.'/'.$folder;
@@ -361,12 +396,22 @@ class LegacyVerifier
                 $checked++;
 
                 if (! $disk->exists($prefix.'/'.$relative)) {
-                    $problems[] = "Chưa sao chép: {$relative}";
+                    $references ??= $this->newSiteReferences();
+
+                    if (str_contains($references, mb_strtolower($prefix.'/'.$relative))) {
+                        $problems[] = "Chưa sao chép: {$relative}";
+                    } else {
+                        $removedUnused++;
+                    }
                 }
             }
         }
 
         $notes = $skipped === [] ? [] : [count($skipped).' tệp bị bỏ qua có chủ đích (định dạng không cho phép hoặc chứa mã PHP): '.implode(', ', array_slice($skipped, 0, 8)).(count($skipped) > 8 ? ', …' : '')];
+
+        if ($removedUnused > 0) {
+            $notes[] = "{$removedUnused} tệp cũ không còn được dùng ở website mới đã được xoá (không tính là lỗi).";
+        }
 
         $this->record('Tệp tải lên (files/, media/)', $checked, $problems, $notes);
     }

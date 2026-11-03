@@ -76,7 +76,8 @@ class ManageSiteSettings extends Page
                         $pair('company_name', fn (string $name, bool $en) => TextInput::make($name)->label('Tên công ty')->required(! $en)),
                         Grid::make(2)->schema([
                             TextInput::make('brand_name')->label('Tên ngắn / thương hiệu')->required(),
-                            TextInput::make('phone')->label('Điện thoại')->tel()->required(),
+                            TextInput::make('phone')->label('Điện thoại')->tel()->required()->helperText('Hiện ở đầu trang, chân trang và trang Liên hệ.'),
+                            TextInput::make('hotline')->label('Hotline')->tel()->helperText('Hiện ở các khối kêu gọi gọi điện (sản phẩm, tin tức, dịch vụ, khối liên hệ cuối trang, nút Gọi trên điện thoại). Để trống sẽ dùng số Điện thoại.'),
                             TextInput::make('fax')->label('Fax'),
                             TextInput::make('email')->label('Email liên hệ')->email()->required(),
                             TextInput::make('contact_notify_email')->label('Email nhận thông báo liên hệ')->email()->required()->helperText('Tin nhắn từ form liên hệ được gửi về địa chỉ này.'),
@@ -182,7 +183,7 @@ class ManageSiteSettings extends Page
     private function settingKeys(): array
     {
         return [
-            'company_name', 'brand_name', 'tagline', 'phone', 'fax', 'email', 'contact_notify_email', 'zalo', 'tax_code', 'founded_year',
+            'company_name', 'brand_name', 'tagline', 'phone', 'hotline', 'fax', 'email', 'contact_notify_email', 'zalo', 'tax_code', 'founded_year',
             'working_hours', 'address', 'office_address', 'map_url', 'map_embed_url',
             'home_hero_content', 'home_hero_image', 'home_hero_caption', 'home_about_content', 'home_about_image', 'home_stats_content', 'industries_content',
             'about_hero_content', 'about_hero_image', 'about_intro_content', 'about_pillars_content', 'about_values_content', 'about_origins',

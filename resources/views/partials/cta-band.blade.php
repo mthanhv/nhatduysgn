@@ -6,7 +6,7 @@
         </div>
         <div class="cta-actions">
             <a class="btn btn-white btn-lg" href="{{ lroute('contact') }}">{{ __('Gửi liên hệ') }}</a>
-            <a class="btn btn-ghost-light btn-lg" href="{{ tel_href(setting('phone')) }}">{{ __('Gọi') }} {{ setting('phone') }}</a>
+            <a class="btn btn-ghost-light btn-lg" href="{{ tel_href(hotline_number()) }}">{{ __('Gọi') }} {{ hotline_number() }}</a>
         </div>
     </div>
 </section>

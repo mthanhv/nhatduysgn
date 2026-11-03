@@ -84,3 +84,14 @@ if (! function_exists('tel_href')) {
         return 'tel:'.preg_replace('/[^0-9+]/', '', (string) $phone);
     }
 }
+
+if (! function_exists('hotline_number')) {
+    /**
+     * Number for calls to action across the site (product, news, services and call-to-action blocks);
+     * the main phone number while no hotline is set. Header, footer and contact page show setting('phone').
+     */
+    function hotline_number(): ?string
+    {
+        return setting('hotline') ?: setting('phone');
+    }
+}

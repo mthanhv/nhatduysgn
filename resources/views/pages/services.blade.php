@@ -25,7 +25,7 @@
                 {!! $hero->body !!}
                 <div class="hero-actions">
                     <a class="btn btn-primary btn-lg" href="{{ lroute('contact', ['chu-de' => 'service', 'tieu-de' => __('Yêu cầu khảo sát dịch vụ kỹ thuật')]) }}">{{ __('Yêu cầu khảo sát') }} <x-ui-icon name="arrow-right" :size="18" /></a>
-                    <a class="btn btn-ghost-light btn-lg" href="{{ tel_href(setting('phone')) }}"><x-ui-icon name="phone" :size="18" /> {{ setting('phone') }}</a>
+                    <a class="btn btn-ghost-light btn-lg" href="{{ tel_href(hotline_number()) }}"><x-ui-icon name="phone" :size="18" /> {{ hotline_number() }}</a>
                 </div>
             </div>
         </div>
@@ -85,7 +85,7 @@
 
                     <div class="cta-row">
                         <a class="btn btn-primary" style="flex:0 1 auto" href="{{ lroute('contact', ['chu-de' => 'service', 'tieu-de' => $service->title]) }}">{{ __('Liên hệ về dịch vụ này') }}</a>
-                        <a class="btn btn-outline" style="flex:0 1 auto" href="{{ tel_href(setting('phone')) }}"><x-ui-icon name="phone" :size="16" /> {{ __('Gọi tư vấn') }}</a>
+                        <a class="btn btn-outline" style="flex:0 1 auto" href="{{ tel_href(hotline_number()) }}"><x-ui-icon name="phone" :size="16" /> {{ __('Gọi tư vấn') }}</a>
                     </div>
                 </div>
             </article>
@@ -173,7 +173,7 @@
                 <div class="split-text" style="flex-basis:340px">
                     <span class="eyebrow">{{ __('Hỏi đáp') }}</span>
                     <h2>{{ __('Câu hỏi thường gặp') }}</h2>
-                    <p>{{ __('Chưa thấy câu trả lời bạn cần? Gọi') }} <a href="{{ tel_href(setting('phone')) }}"><strong>{{ setting('phone') }}</strong></a> {{ __('hoặc gửi câu hỏi cho chúng tôi.') }}</p>
+                    <p>{{ __('Chưa thấy câu trả lời bạn cần? Gọi') }} <a href="{{ tel_href(hotline_number()) }}"><strong>{{ hotline_number() }}</strong></a> {{ __('hoặc gửi câu hỏi cho chúng tôi.') }}</p>
                     <a class="btn btn-outline" style="align-self:flex-start" href="{{ lroute('contact', ['chu-de' => 'service']) }}">{{ __('Gửi câu hỏi') }}</a>
                 </div>
                 <div class="faq" style="flex:1.6 1 560px">

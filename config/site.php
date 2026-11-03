@@ -20,6 +20,8 @@ return [
     // Representative office (VPĐD): shown next to the head office; the map and directions point here.
     'office_address' => '10 Đường Ao Đôi, P. Bình Trị Đông, TP. Hồ Chí Minh',
     'phone' => '028 7300 7797',
+    // Empty: blocks that show the hotline use the phone number above.
+    'hotline' => null,
     'fax' => '028 7304 7744',
     'email' => 'sales@nhatduysgn.com',
     'zalo' => null,

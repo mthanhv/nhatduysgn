@@ -103,6 +103,16 @@ class LegacyImporterTest extends TestCase
             ->assertFailed();
     }
 
+    public function test_verify_accepts_deleted_old_files_that_the_new_site_does_not_use(): void
+    {
+        $this->artisan('legacy:import')->assertSuccessful();
+        Storage::disk('public')->delete('legacy/media/old-banner.png');
+
+        $this->artisan('legacy:verify')
+            ->expectsOutputToContain('1 tệp cũ không còn được dùng')
+            ->assertSuccessful();
+    }
+
     public function test_import_is_idempotent_and_can_keep_admin_edits(): void
     {
         $this->artisan('legacy:import', ['--step' => ['categories', 'brands', 'products']])->assertSuccessful();
@@ -247,6 +257,7 @@ class LegacyImporterTest extends TestCase
             'files/suppliers/ithlogo.jpeg' => $jpeg,
             'files/customers/ptsc.png' => $png,
             'media/cx-chart.png' => $png.'<?=random binary bytes',
+            'media/old-banner.png' => $png,
             'media/file.php<?.pdf' => '<?php system($_GET["c"]);',
             'media/fake.jpg' => "GIF89a<?php eval(\$_POST['x']);",
             'media/not-really.pdf' => '<html>phishing page</html>',

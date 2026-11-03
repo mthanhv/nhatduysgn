@@ -138,7 +138,7 @@ class Seo
         return self::text(collect([
             $product->name.($facts !== '' ? " ({$facts})" : '').'.',
             self::text($lead, 220),
-            __('Hàng chính hãng, tư vấn kỹ thuật: :phone.', ['phone' => setting('phone')]),
+            __('Hàng chính hãng, tư vấn kỹ thuật: :phone.', ['phone' => hotline_number()]),
         ])->filter()->implode(' '));
     }
 
@@ -180,7 +180,7 @@ class Seo
             __('Sản phẩm :brand chính hãng:country do :name phân phối tại Việt Nam.', ['brand' => $brand->name, 'country' => $brand->country ? " ({$brand->country})" : '', 'name' => setting('brand_name')]),
             $groups->isNotEmpty() ? __('Nhóm sản phẩm').': '.$groups->implode(', ').'.' : null,
             self::text($brand->description, 160),
-            __('Tư vấn kỹ thuật: :phone.', ['phone' => setting('phone')]),
+            __('Tư vấn kỹ thuật: :phone.', ['phone' => hotline_number()]),
         ])->filter()->implode(' '));
     }
 
@@ -246,7 +246,7 @@ class Seo
             'contactPoint' => [[
                 '@type' => 'ContactPoint',
                 'contactType' => 'sales',
-                'telephone' => setting('phone'),
+                'telephone' => hotline_number(),
                 'email' => setting('email'),
                 'areaServed' => 'VN',
                 'availableLanguage' => ['vi', 'en'],

@@ -177,7 +177,7 @@
 </footer>
 
 <nav class="mobile-bar" aria-label="{{ __('Liên hệ nhanh') }}">
-    <a class="btn btn-outline" href="{{ tel_href(setting('phone')) }}"><x-ui-icon name="phone" :size="18" /> {{ __('Gọi') }}</a>
+    <a class="btn btn-outline" href="{{ tel_href(hotline_number()) }}"><x-ui-icon name="phone" :size="18" /> {{ __('Gọi') }}</a>
     @if (setting('zalo'))
         <a class="btn btn-zalo" href="https://zalo.me/{{ preg_replace('/\D/', '', setting('zalo')) }}" rel="noopener" target="_blank">Zalo</a>
     @else

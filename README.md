@@ -140,6 +140,8 @@ It reconciles the old site against the new one, record by record, and lists ever
 | Content links | Every image/link inside migrated descriptions and posts points to a file or page that exists; no links left to the old domain |
 | Old URLs | Every old product/category/brand/supplier/tag/article URL plus the old menu and slider links answers 301 → a page that returns 200 |
 
+Old upload files that nothing on the new site uses (videos, replaced images, files of deleted products) may be deleted to save space: the *Files* check only reports a missing file when a record, a content link or a seeder still uses it, and notes how many were removed. A later `legacy:import --step=files` would copy them back.
+
 It also prints what is **not migrated on purpose** (old admin users, homepage slider, menus, template text blocks) so the report covers every old table.
 
 For the strongest check, run it against the URLs real visitors and Google used, taken from the old server's access logs before switching DNS:

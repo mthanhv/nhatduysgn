@@ -73,7 +73,7 @@
                 <h2>{{ __('Cần tư vấn kỹ thuật?') }}</h2>
                 <p>{{ __('Đội ngũ kỹ sư :name sẵn sàng hỗ trợ chọn thiết bị và giải pháp bảo trì.', ['name' => setting('brand_name')]) }}</p>
                 <a class="btn btn-white" href="{{ lroute('contact', ['chu-de' => 'product', 'tieu-de' => __('Liên quan bài viết').': '.$post->title]) }}">{{ __('Gửi liên hệ') }}</a>
-                <a class="news-widget__phone" href="{{ tel_href(setting('phone')) }}">{{ setting('phone') }}</a>
+                <a class="news-widget__phone" href="{{ tel_href(hotline_number()) }}">{{ hotline_number() }}</a>
             </div>
         </aside>
     </div>
