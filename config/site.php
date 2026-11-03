@@ -59,9 +59,10 @@ return [
 
     'contact_notify_email' => env('CONTACT_NOTIFY_EMAIL', 'sales@nhatduysgn.com'),
 
-    // Not an admin setting (read with config()): while false the public services page and every link to it are
-    // hidden and /dich-vu redirects to the home page. Services stay editable in the admin.
-    'services_page' => (bool) env('SERVICES_PAGE_ENABLED', false),
+    // Not admin settings (read with config()): whether Dịch vụ / Dự án appear in the main menu. Hidden only from the
+    // menu; the pages, their other links and the sitemap stay as they are.
+    'services_in_menu' => (bool) env('SERVICES_IN_MENU', false),
+    'projects_in_menu' => (bool) env('PROJECTS_IN_MENU', false),
 
     /*
     | English versions (see Setting::TRANSLATABLE), shown on the /en site. An empty one falls back to the

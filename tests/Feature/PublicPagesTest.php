@@ -10,6 +10,7 @@ use App\Models\Project;
 use App\Models\Service;
 use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class PublicPagesTest extends TestCase
@@ -288,23 +289,24 @@ class PublicPagesTest extends TestCase
             ->assertSee('Quy trình làm việc');
     }
 
-    public function test_disabled_services_page_is_hidden_everywhere_and_redirects_home(): void
+    public function test_services_and_projects_can_be_left_out_of_the_main_menu_but_stay_reachable(): void
     {
-        config(['site.services_page' => false]);
-        Service::factory()->create(['title' => 'Tháo lắp bu lông bằng thủy lực', 'slug' => 'thao-lap-bu-long']);
+        $mainMenu = fn (string $html): string => Str::betweenFirst($html, 'id="main-nav"', '</nav>');
 
-        $this->get(route('services'))->assertRedirect(route('home'));
-        $this->get(route('en.services'))->assertRedirect(route('en.home'));
+        config(['site.services_in_menu' => false, 'site.projects_in_menu' => false]);
+        $home = $this->get(route('home'))->assertOk()->getContent();
+        $this->assertStringNotContainsString('href="'.route('services').'"', $mainMenu($home));
+        $this->assertStringNotContainsString('href="'.route('projects.index').'"', $mainMenu($home));
+        $this->assertStringContainsString('href="'.route('products.index').'"', $mainMenu($home));
+        $this->assertStringContainsString('<li><a href="'.route('services').'">', $home, 'Footer keeps the link');
+        $this->get(route('services'))->assertOk();
+        $this->get(route('projects.index'))->assertOk();
+        $this->get(route('sitemap'))->assertSee(route('services'))->assertSee(route('projects.index'));
 
-        foreach ([route('home'), route('about'), route('contact'), route('en.home'), route('en.about')] as $url) {
-            $this->get($url)->assertOk()
-                ->assertDontSee('href="'.route('services'), false)
-                ->assertDontSee('href="'.route('en.services'), false)
-                ->assertDontSee('Tháo lắp bu lông bằng thủy lực');
-        }
-
-        $this->get(route('sitemap'))->assertDontSee(route('services'))->assertDontSee(route('en.services'));
-        $this->get(route('llms'))->assertDontSee(route('services'))->assertDontSee('Tháo lắp bu lông bằng thủy lực');
+        config(['site.services_in_menu' => true, 'site.projects_in_menu' => true]);
+        $home = $this->get(route('home'))->getContent();
+        $this->assertStringContainsString('href="'.route('services').'"', $mainMenu($home));
+        $this->assertStringContainsString('href="'.route('projects.index').'"', $mainMenu($home));
     }
 
     public function test_header_footer_and_contact_page_show_the_phone_and_call_to_action_blocks_show_the_hotline(): void

@@ -27,7 +27,7 @@ class SitemapController extends Controller
 
     public function sitemap(): Response
     {
-        $pages = ['home', 'about', ...config('site.services_page') ? ['services'] : [], 'products.index', 'projects.index', 'posts.index', 'contact'];
+        $pages = ['home', 'about', 'services', 'products.index', 'projects.index', 'posts.index', 'contact'];
         $categories = ProductCategory::query()->published()->get(['slug', 'translations', 'updated_at']);
         $brands = Brand::query()->published()->whereHas('products', fn ($query) => $query->published())->get(['slug', 'translations', 'updated_at']);
         $products = Product::query()->published()->get(['slug', 'name', 'image', 'translations', 'updated_at']);
@@ -83,7 +83,7 @@ class SitemapController extends Controller
         return $this->text(view('llms', [
             'categories' => $this->categoryTree(),
             'brands' => Brand::query()->published()->ordered()->get(),
-            'services' => config('site.services_page') ? Service::query()->published()->ordered()->get() : collect(),
+            'services' => Service::query()->published()->ordered()->get(),
         ])->render(), 'text/markdown');
     }
 

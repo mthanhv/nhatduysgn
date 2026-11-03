@@ -93,7 +93,7 @@
         </section>
     @endif
 
-    @if (config('site.services_page') && $services->isNotEmpty())
+    @if ($services->isNotEmpty())
         <section class="band-navy">
             <div class="container">
                 <div class="section-head">
