@@ -24,7 +24,7 @@
         // 'menu' items open a pop-up (partials/nav-{menu}) listing these entries; with none they stay a plain link.
         ['route' => 'products.index', 'match' => ['products.index', 'products.category', 'products.show'], 'label' => __('Sản phẩm'), 'menu' => 'products', 'entries' => $navCategories],
         ['route' => 'products.index', 'match' => 'products.brand', 'label' => __('Thương hiệu'), 'menu' => 'brands', 'entries' => $navBrands],
-        ['route' => 'services', 'match' => 'services', 'label' => __('Dịch vụ')],
+        ...config('site.services_page') ? [['route' => 'services', 'match' => 'services', 'label' => __('Dịch vụ')]] : [],
         ['route' => 'projects.index', 'match' => 'projects.*', 'label' => __('Dự án')],
         ['route' => 'posts.index', 'match' => 'posts.*', 'label' => __('Tin tức')],
     ];
@@ -166,7 +166,7 @@
             <h3>{{ __('Công ty') }}</h3>
             <ul>
                 <li><a href="{{ lroute('about') }}">{{ __('Giới thiệu') }}</a></li>
-                <li><a href="{{ lroute('services') }}">{{ __('Dịch vụ') }}</a></li>
+                @if (config('site.services_page'))<li><a href="{{ lroute('services') }}">{{ __('Dịch vụ') }}</a></li>@endif
                 <li><a href="{{ lroute('projects.index') }}">{{ __('Dự án') }}</a></li>
                 <li><a href="{{ lroute('posts.index') }}">{{ __('Tin tức') }}</a></li>
                 <li><a href="{{ lroute('contact') }}">{{ __('Liên hệ') }}</a></li>

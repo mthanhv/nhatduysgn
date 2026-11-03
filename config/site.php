@@ -57,6 +57,10 @@ return [
 
     'contact_notify_email' => env('CONTACT_NOTIFY_EMAIL', 'sales@nhatduysgn.com'),
 
+    // Not an admin setting (read with config()): while false the public services page and every link to it are
+    // hidden and /dich-vu redirects to the home page. Services stay editable in the admin.
+    'services_page' => (bool) env('SERVICES_PAGE_ENABLED', false),
+
     /*
     | English versions (see Setting::TRANSLATABLE), shown on the /en site. An empty one falls back to the
     | Vietnamese value; the partner block stays hidden until it has a title.

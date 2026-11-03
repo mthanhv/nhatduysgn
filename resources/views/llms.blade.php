@@ -22,7 +22,9 @@
 
 - [Giới thiệu]({{ route('about') }}): {!! \App\Services\ContentBlock::parse(setting('about_hero_content'))->bodyText() !!}
 - [Sản phẩm]({{ route('products.index') }}): toàn bộ nhóm sản phẩm và thương hiệu; tìm kiếm theo tên/mã: {{ route('products.index') }}?q=MÃ_SẢN_PHẨM
+@if (config('site.services_page'))
 - [Dịch vụ kỹ thuật]({{ route('services') }}): {!! \App\Services\ContentBlock::parse(setting('services_hero_content'))->bodyText() !!}
+@endif
 - [Dự án]({{ route('projects.index') }}): dự án đã triển khai tại các nhà máy
 - [Tin tức]({{ route('posts.index') }}): bài viết kỹ thuật và tin hoạt động
 - [Liên hệ]({{ route('contact') }})

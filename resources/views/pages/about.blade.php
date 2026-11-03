@@ -174,7 +174,7 @@
                 </div>
                 <div class="cta-actions">
                     <a class="btn btn-white btn-lg" href="{{ lroute('contact') }}">{{ __('Liên hệ với chúng tôi') }}</a>
-                    <a class="btn btn-ghost-light btn-lg" href="{{ lroute('services') }}">{{ __('Xem dịch vụ') }}</a>
+                    @if (config('site.services_page'))<a class="btn btn-ghost-light btn-lg" href="{{ lroute('services') }}">{{ __('Xem dịch vụ') }}</a>@endif
                 </div>
             </div>
         </div>

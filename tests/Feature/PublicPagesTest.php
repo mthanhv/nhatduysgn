@@ -287,4 +287,23 @@ class PublicPagesTest extends TestCase
             ->assertSee('Câu hỏi thường gặp')
             ->assertSee('Quy trình làm việc');
     }
+
+    public function test_disabled_services_page_is_hidden_everywhere_and_redirects_home(): void
+    {
+        config(['site.services_page' => false]);
+        Service::factory()->create(['title' => 'Tháo lắp bu lông bằng thủy lực', 'slug' => 'thao-lap-bu-long']);
+
+        $this->get(route('services'))->assertRedirect(route('home'));
+        $this->get(route('en.services'))->assertRedirect(route('en.home'));
+
+        foreach ([route('home'), route('about'), route('contact'), route('en.home'), route('en.about')] as $url) {
+            $this->get($url)->assertOk()
+                ->assertDontSee('href="'.route('services'), false)
+                ->assertDontSee('href="'.route('en.services'), false)
+                ->assertDontSee('Tháo lắp bu lông bằng thủy lực');
+        }
+
+        $this->get(route('sitemap'))->assertDontSee(route('services'))->assertDontSee(route('en.services'));
+        $this->get(route('llms'))->assertDontSee(route('services'))->assertDontSee('Tháo lắp bu lông bằng thủy lực');
+    }
 }

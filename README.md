@@ -152,6 +152,10 @@ php artisan legacy:verify --urls=old-urls.txt
 
 **Go-live rule:** run the full `legacy:import` (it ends with the `catalog` step that applies the product group mapping in `config/catalog.php`), then `legacy:verify` (with `--urls`) on the production server; switch DNS only when it exits with code 0. Regrouping decisions belong in `config/catalog.php`; edits made only in a local admin (settings, group images) must be re-entered in production. After go-live, watch *Hệ thống → Chuyển hướng URL* and the server's 404 log for a few weeks and add redirects for anything new.
 
+### Services page switch (`SERVICES_PAGE_ENABLED`)
+
+The public services page is hidden while `SERVICES_PAGE_ENABLED=false` (the default): no *Dịch vụ* in the menu or footer, no services block on the home page, no *Xem dịch vụ* button on About, and nothing about services in the sitemap or `/llms.txt`; `/dich-vu` and `/en/services` redirect (302) to the home page. Services stay editable in the admin. To publish it, set `SERVICES_PAGE_ENABLED=true` in `.env` and run `php artisan optimize`.
+
 ## Old URLs (SEO)
 
 Every old URL is answered with a **301** to its new address, so Google rankings and bookmarks carry over. Handled by `App\Services\LegacyUrlResolver` (fallback route); admin-defined redirects (*Hệ thống → Chuyển hướng URL*) take priority.
@@ -190,7 +194,7 @@ After go-live: submit `https://nhatduysgn.com/sitemap.xml` in Google Search Cons
 1. **Contain the old site first** (it is compromised): take it offline or at least delete `public_html/app/webroot/filemanager/` and every `*.php*` file under `app/webroot/media` and `files`; change hosting, FTP, database and email passwords.
 2. Create a new MariaDB database + user for the new site. Keep the old database — it is the import source.
 3. Upload the project **outside** the web root, e.g. `~/domains/nhatduysgn.com/app/`, and point the domain's document root to its `public/` folder (DirectAdmin: replace `public_html` with a symlink to `app/public`).
-4. Create `.env` from `.env.example`: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://nhatduysgn.com`, `DB_*`, `LEGACY_DB_*` (old database), `LEGACY_WEBROOT` (old `app/webroot` path), `MAIL_*` (hosting SMTP), `CONTACT_NOTIFY_EMAIL`.
+4. Create `.env` from `.env.example`: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://nhatduysgn.com`, `DB_*`, `LEGACY_DB_*` (old database), `LEGACY_WEBROOT` (old `app/webroot` path), `MAIL_*` (hosting SMTP), `CONTACT_NOTIFY_EMAIL`. Leave `SERVICES_PAGE_ENABLED=false` until the services content is ready (see below).
 5. On the server (SSH):
    ```bash
    composer install --no-dev --optimize-autoloader
