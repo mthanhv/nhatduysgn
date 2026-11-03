@@ -47,6 +47,15 @@ class ThumbnailTest extends TestCase
         $this->assertSame([640, 320], [$width, $height]);
     }
 
+    public function test_resizing_into_a_folder_created_by_a_parallel_request_leaves_no_temporary_files(): void
+    {
+        File::ensureDirectoryExists($this->root.'/_thumbs/640/legacy/files/products');
+
+        $this->get('/uploads/_thumbs/640/legacy/files/products/'.rawurlencode('ảnh lớn.png').'.webp')->assertOk();
+
+        $this->assertSame(['ảnh lớn.png.webp'], array_map('basename', File::files($this->root.'/_thumbs/640/legacy/files/products')));
+    }
+
     public function test_only_known_sizes_and_real_uploads_are_resized(): void
     {
         $this->get('/uploads/_thumbs/777/legacy/files/products/x.png.webp')->assertNotFound();

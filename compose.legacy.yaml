@@ -1,0 +1,16 @@
+# Optional: the old sites' dumps and upload folders, only needed to re-run `legacy:import` / `legacy:verify`.
+#   docker compose -f compose.yaml -f compose.legacy.yaml up -d
+# The dumps load into the `legacy` / `legacy_tbn` databases only when the db volume is first created.
+# The webroots come from the backup zips: unzip public_html.zip inside each backups/<site>-20261103 folder first.
+services:
+  app:
+    volumes:
+      - ${LEGACY_WEBROOT_HOST:-../backups/nhatduysgn.com-20261103/public_html/app/webroot}:/legacy-webroot:ro
+      - ${LEGACY_TBN_WEBROOT_HOST:-../backups/thietbinongong.com-20261103/public_html/app/webroot}:/legacy-webroot-tbn:ro
+
+  db:
+    volumes:
+      - ./docker/mariadb/01-legacy.sh:/docker-entrypoint-initdb.d/01-legacy.sh:ro
+      - ${LEGACY_SQL_HOST:-../backups/nhatduysgn.com-20261103/nha9921a_nhatduy.sql}:/legacy/dump.sql:ro
+      - ./docker/mariadb/02-legacy-tbn.sh:/docker-entrypoint-initdb.d/02-legacy-tbn.sh:ro
+      - ${LEGACY_TBN_SQL_HOST:-../backups/thietbinongong.com-20261103/nha9921a_tbnongong.sql}:/legacy/tbn.sql:ro

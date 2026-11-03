@@ -85,9 +85,20 @@ class Thumbnailer
 
         imagealphablending($image, false);
         imagesavealpha($image, true);
-        File::ensureDirectoryExists(dirname($target));
-        $saved = imagewebp($image, $target, 80);
+        // Images on one page are resized in parallel requests: the folder may be created by another request between the
+        // check and mkdir(), and the file is written under a temporary name so no request serves it half-written.
+        $directory = dirname($target);
+
+        if (! is_dir($directory) && ! @mkdir($directory, 0755, true) && ! is_dir($directory)) {
+            imagedestroy($image);
+
+            return null;
+        }
+
+        $temporary = $target.'.'.Str::random(8).'.tmp';
+        $saved = imagewebp($image, $temporary, 80) && rename($temporary, $target);
         imagedestroy($image);
+        File::delete($temporary);
 
         return $saved ? $target : null;
     }

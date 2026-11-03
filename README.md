@@ -20,7 +20,6 @@ docker compose up -d --build
 docker compose exec app composer install
 cp .env.example .env && docker compose exec app php artisan key:generate   # first time only
 docker compose exec app php artisan migrate --seed
-docker compose exec app php artisan legacy:import          # optional: real data from the old site
 docker compose exec app php artisan make:filament-user     # admin account
 ```
 
@@ -29,12 +28,14 @@ docker compose exec app php artisan make:filament-user     # admin account
 | http://localhost:8000 | Website |
 | http://localhost:8000/admin | Admin |
 | http://localhost:8026 | Mailpit (emails sent by the contact form) |
-| `127.0.0.1:3308` | MariaDB (`nhatduy` / `nhatduy`); databases `nhatduy` (new) and `legacy` (old site dump) |
+| `127.0.0.1:3308` | MariaDB (`nhatduy` / `nhatduy`) |
 
-The `db` container loads the old dump into the `legacy` database on first start. Paths default to the sibling folders of this repo and can be overridden:
+For real data, import the production database (or the go-live export in `../backups/migration-20261103/`) instead of seeding.
+
+The old sites (nhatduysgn.com, thietbinongong.com) are no longer run locally; their code, uploads and dumps are archived in `../backups/<site>-20261103/`. Only to re-run `legacy:import` / `legacy:verify`, unzip `public_html.zip` there and start the stack with the legacy override, which mounts the old upload folders and loads the dumps into the `legacy` / `legacy_tbn` databases on a new db volume (paths can be overridden with `LEGACY_SQL_HOST`, `LEGACY_WEBROOT_HOST`, `LEGACY_TBN_SQL_HOST`, `LEGACY_TBN_WEBROOT_HOST`):
 
 ```bash
-LEGACY_SQL_HOST=/path/to/nha9921a_nhatduy.sql LEGACY_WEBROOT_HOST=/path/to/old/app/webroot docker compose up -d
+docker compose -f compose.yaml -f compose.legacy.yaml up -d
 ```
 
 Tests and code style:
@@ -117,7 +118,7 @@ php artisan legacy:import --site=tbn           # steps: files, brands, products
 php artisan legacy:verify --site=tbn           # products, upload folders, old thietbinongong.com URLs
 ```
 
-- Settings: `LEGACY_TBN_DB_DATABASE` (its dump; the Docker stack loads it into `legacy_tbn`) and `LEGACY_TBN_WEBROOT` (its `app/webroot`). Uploads are copied to `public/uploads/legacy-tbn/` (`files/products`, `files/suppliers`, `media` only).
+- Settings: `LEGACY_TBN_DB_DATABASE` (its dump; `compose.legacy.yaml` loads it into `legacy_tbn`) and `LEGACY_TBN_WEBROOT` (its `app/webroot`). Uploads are copied to `public/uploads/legacy-tbn/` (`files/products`, `files/suppliers`, `media` only).
 - Old IDs are stored as `tbn:{id}` (product `legacy_key`, group `legacy_ids`, brand `legacy_keys`) so they never clash with nhatduysgn.com's IDs.
 - Groups: the `tbn` lists in `config/catalog.php` (group *Thiết bị nong ống* plus the pipe cutting/flange facing groups).
 - A product whose code (or name) already exists among nhatduysgn.com's products is not duplicated; the existing product gets the `tbn:` ID and the import lists it. If thietbinongong.com filed it in a finer sub-group of the same top-level group (e.g. *Đầu nong ống cho lò hơi*), it moves there. Run this import **after** the main `legacy:import`, and again if the main import is re-run.
